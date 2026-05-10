@@ -1,9 +1,6 @@
-const CACHE = 'training-tracker-v1';
+const CACHE = 'training-tracker-v2';
 const SHELL = [
-  './',
-  './index.html',
-  'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap',
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js'
+  './index.html'
 ];
 
 self.addEventListener('install', e => {
@@ -21,25 +18,25 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
+  const url = e.request.url;
 
-  // Supabase API-Requests immer ans Netzwerk durchleiten
-  if(url.hostname.includes('supabase.co')) {
+  // Nur http/https verarbeiten
+  if(!url.startsWith('http')) return;
+
+  // Supabase, Auth, externe APIs immer ans Netzwerk
+  if(url.includes('supabase.co') || url.includes('googleapis.com') || url.includes('jsdelivr.net')) {
     e.respondWith(fetch(e.request));
     return;
   }
 
-  // App Shell: Cache first, Netzwerk als Fallback
+  // App Shell: Network first, Cache als Fallback
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      if(cached) return cached;
-      return fetch(e.request).then(res => {
-        if(res && res.status === 200 && e.request.method === 'GET') {
-          const clone = res.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
-        }
-        return res;
-      }).catch(() => caches.match('./index.html'));
-    })
+    fetch(e.request).then(res => {
+      if(res && res.status === 200 && e.request.method === 'GET') {
+        const clone = res.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+      }
+      return res;
+    }).catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
   );
 });
