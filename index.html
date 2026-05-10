@@ -273,15 +273,18 @@ async function doLogout() {
 
 sb.auth.onAuthStateChange((event, session) => {
   currentUser = session?.user || null;
-  if(currentUser) {
+  if(event === 'SIGNED_OUT') {
+    document.getElementById('auth-screen').style.display='flex';
+    document.getElementById('app').style.display='none';
+    sessionStorage.removeItem('tt_nav');
+    sessionStorage.removeItem('tt_session');
+  } else if(event === 'SIGNED_IN' && document.getElementById('app').style.display === 'none') {
     document.getElementById('auth-screen').style.display='none';
     document.getElementById('app').style.display='flex';
     viewStack=[];
     setTab('plans');
-  } else {
-    document.getElementById('auth-screen').style.display='flex';
-    document.getElementById('app').style.display='none';
   }
+  // TOKEN_REFRESHED und weitere Events beim Tab-Wechsel ignorieren
 });
 
 // --- NAV ---
