@@ -325,6 +325,8 @@ function pushView(v) {
 }
 
 function goBack() {
+  const v=currentView();
+  if(v&&v.type==='session') stopTimer();
   viewStack.pop();
   if(!viewStack.length) {
     document.getElementById('back-btn').style.display='none';
@@ -360,14 +362,19 @@ async function render() {
 
 // --- PLANS ---
 async function renderPlans(c) {
-  const {data:plans,error} = await sb.from('plans').select('*,units(count)').order('created_at');
+  const {data:plans,error} = await sb.from('plans').select('*,units(*)').order('created_at');
   if(error) throw error;
-  let h=`<div class="section-label">Meine Pläne</div>`;
+  let h=`<div class="section-label">Meine Pl\u00e4ne</div>`;
   if(!plans.length) {
-    h+=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Noch keine Pläne</div><div class="empty-sub">Erstelle deinen ersten Trainingsplan</div></div>`;
+    h+=`<div class="empty"><div class="empty-icon">&#x1F4CB;</div><div class="empty-title">Noch keine Pl\u00e4ne</div><div class="empty-sub">Erstelle deinen ersten Trainingsplan</div></div>`;
   } else {
+    // Quick-Start Button
+    h+=`<button class="btn-primary" style="width:100%;justify-content:center;margin-bottom:14px;font-size:16px;padding:14px;display:flex;align-items:center;gap:8px" onclick="showQuickStartModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Workout starten
+    </button>`;
     plans.forEach(p=>{
-      const uc = p.units?.[0]?.count||0;
+      const uc = p.units?.length||0;
       h+=`<div class="card" onclick="openPlan('${p.id}','${esc(p.name)}')">
         <div class="card-row">
           <div><div class="card-title">${esc(p.name)}</div><div class="card-sub">${uc} Einheit${uc!==1?'en':''}</div></div>
@@ -378,6 +385,34 @@ async function renderPlans(c) {
   }
   c.innerHTML=h;
   c.insertAdjacentHTML('beforeend',`<button class="fab" onclick="showNewPlanModal()">+</button>`);
+}
+
+async function showQuickStartModal(){
+  const {data:plans} = await sb.from('plans').select('*,units(*)').order('created_at');
+  if(!plans||!plans.length){showToast('Keine Pl\u00e4ne vorhanden');return;}
+  let opts='';
+  plans.forEach((p,pi)=>{
+    (p.units||[]).forEach((u,ui)=>{
+      const bc='bc'+(ui%8);
+      opts+=`<div class="card" style="margin-bottom:8px" onclick="quickStart('${p.id}','${esc(p.name)}','${u.id}','${esc(u.letter)}')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="badge ${bc}">${esc(u.letter)}</span>
+          <div><div style="font-size:14px;font-weight:500;color:var(--text)">${esc(u.name||'Einheit '+u.letter)}</div>
+          <div style="font-size:12px;color:var(--text3)">${esc(p.name)}</div></div>
+        </div>
+      </div>`;
+    });
+  });
+  if(!opts) opts=`<div class="empty" style="padding:16px"><div class="empty-title">Keine Einheiten vorhanden</div></div>`;
+  modal(`<div class="modal-title">Welche Einheit? <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>${opts}`);
+}
+
+function quickStart(planId,planName,unitId,letter){
+  closeModal();
+  document.getElementById('topbar-title').textContent='Training \u00b7 '+letter;
+  document.getElementById('topbar-sub').textContent=planName;
+  sessionData={};
+  pushView({type:'session',planId,planName,unitId,letter});
 }
 
 function openPlan(id,name) {
@@ -451,51 +486,104 @@ async function renderUnitDetail(v,c) {
 }
 
 // --- SESSION ---
+let sessionTimer=null;
+let sessionStartTime=null;
+let currentExIndex=0;
+
 function startSession(planId,planName,unitId,letter) {
   document.getElementById('topbar-title').textContent='Training \u00b7 '+letter;
   document.getElementById('topbar-sub').textContent=planName;
   sessionData={};
+  currentExIndex=0;
+  startTimer();
   pushView({type:'session',planId,planName,unitId,letter});
+}
+
+function startTimer(){
+  sessionStartTime=Date.now();
+  if(sessionTimer) clearInterval(sessionTimer);
+  sessionTimer=setInterval(()=>{
+    const el=document.getElementById('session-timer');
+    if(el) el.textContent=formatDuration(Math.floor((Date.now()-sessionStartTime)/1000));
+  },1000);
+}
+
+function stopTimer(){
+  if(sessionTimer){clearInterval(sessionTimer);sessionTimer=null;}
+  return sessionStartTime?Math.floor((Date.now()-sessionStartTime)/1000):0;
+}
+
+function formatDuration(secs){
+  const h=Math.floor(secs/3600);
+  const m=Math.floor((secs%3600)/60);
+  const s=secs%60;
+  if(h>0) return h+'h '+m+'min '+s+'sek';
+  if(m>0) return m+'min '+s+'sek';
+  return s+'sek';
 }
 
 async function renderSession(v,c) {
   const {data:exs,error} = await sb.from('exercises').select('*').eq('unit_id',v.unitId).order('sort_order');
   if(error) throw error;
-  if(!exs||!exs.length){c.innerHTML=`<div class="empty"><div class="empty-title">Keine Übungen</div></div>`;return;}
+  if(!exs||!exs.length){c.innerHTML=`<div class="empty"><div class="empty-title">Keine \u00dcbungen</div></div>`;return;}
 
-  let h='';
-  exs.forEach((ex,ei)=>{
-    const equip=ex.equipment_type||'dumbbell';
-    const isBody=equip==='bodyweight';
-    const isBarbell=equip==='barbell';
-    const tKg=sessionData['kg_'+ei]!==undefined ? sessionData['kg_'+ei] : (isBarbell ? (ex.target_kg_total||'') : (ex.target_kg_per_side||''));
-    const tKgTot=sessionData['kgtot_'+ei]!==undefined ? sessionData['kgtot_'+ei] : (ex.target_kg_total||'');
-    const equipLabel={'dumbbell':'Kurzhantel / Kabelzug','barbell':'Langhantel / Maschine','bodyweight':'K\u00f6rpergewicht'}[equip]||equip;
+  if(currentExIndex>=exs.length) currentExIndex=exs.length-1;
+  if(currentExIndex<0) currentExIndex=0;
+  const ei=currentExIndex;
+  const ex=exs[ei];
+  const isLast=ei===exs.length-1;
 
-    let kgBlock='';
-    if(!isBody){
-      if(isBarbell){
-        kgBlock=`<div style="display:flex;gap:10px;margin-bottom:10px">
-          <div style="flex:1">
-            <div style="font-size:11px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em">KG gesamt <span style="color:var(--accent);font-size:10px">${ex.target_kg_total?'Ziel: '+ex.target_kg_total:''}</span></div>
-            <input class="mini-input" style="width:100%" type="number" step="0.5" id="kg_${ei}" value="${tKg}" placeholder="${ex.target_kg_total||'0'}" oninput="calcTotal(${ei},'barbell')">
-          </div>
-        </div>`;
-      } else {
-        kgBlock=`<div style="display:flex;gap:10px;margin-bottom:10px">
-          <div style="flex:1">
-            <div style="font-size:11px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em">KG/Seite <span style="color:var(--accent);font-size:10px">${ex.target_kg_per_side?'Ziel: '+ex.target_kg_per_side:''}</span></div>
-            <input class="mini-input" style="width:100%" type="number" step="0.5" id="kg_${ei}" value="${tKg}" placeholder="${ex.target_kg_per_side||'0'}" oninput="calcTotal(${ei},'dumbbell')">
-          </div>
-          <div style="flex:1">
-            <div style="font-size:11px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em">KG gesamt <span style="color:var(--accent);font-size:10px">${ex.target_kg_total?'Ziel: '+ex.target_kg_total:''}</span></div>
-            <input class="mini-input" style="width:100%;color:var(--text3)" type="number" step="0.5" id="kgtot_${ei}" value="${tKgTot}" placeholder="${ex.target_kg_total||'0'}" readonly>
-          </div>
-        </div>`;
-      }
+  const equip=ex.equipment_type||'dumbbell';
+  const isBody=equip==='bodyweight';
+  const isBarbell=equip==='barbell';
+  const tKg=sessionData['kg_'+ei]!==undefined?sessionData['kg_'+ei]:(isBarbell?(ex.target_kg_total||''):(ex.target_kg_per_side||''));
+  const tKgTot=sessionData['kgtot_'+ei]!==undefined?sessionData['kgtot_'+ei]:(ex.target_kg_total||'');
+  const equipLabel={'dumbbell':'Kurzhantel / Kabelzug','barbell':'Langhantel / Maschine','bodyweight':'K\u00f6rpergewicht'}[equip]||equip;
+
+  let kgBlock='';
+  if(!isBody){
+    if(isBarbell){
+      kgBlock=`<div style="display:flex;gap:10px;margin-bottom:10px">
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em">KG gesamt <span style="color:var(--accent);font-size:10px">${ex.target_kg_total?'Ziel: '+ex.target_kg_total:''}</span></div>
+          <input class="mini-input" style="width:100%" type="number" step="0.5" id="kg_${ei}" value="${tKg}" placeholder="${ex.target_kg_total||'0'}" oninput="calcTotal(${ei},'barbell')">
+        </div>
+      </div>`;
+    } else {
+      kgBlock=`<div style="display:flex;gap:10px;margin-bottom:10px">
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em">KG/Seite <span style="color:var(--accent);font-size:10px">${ex.target_kg_per_side?'Ziel: '+ex.target_kg_per_side:''}</span></div>
+          <input class="mini-input" style="width:100%" type="number" step="0.5" id="kg_${ei}" value="${tKg}" placeholder="${ex.target_kg_per_side||'0'}" oninput="calcTotal(${ei},'dumbbell')">
+        </div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em">KG gesamt <span style="color:var(--accent);font-size:10px">${ex.target_kg_total?'Ziel: '+ex.target_kg_total:''}</span></div>
+          <input class="mini-input" style="width:100%;color:var(--text3)" type="number" step="0.5" id="kgtot_${ei}" value="${tKgTot}" placeholder="${ex.target_kg_total||'0'}" readonly>
+        </div>
+      </div>`;
     }
+  }
 
-    h+=`<div class="session-card">
+  let setsHtml='';
+  for(let s=0;s<ex.sets;s++){
+    const done=sessionData[`done_${ei}_${s}`];
+    setsHtml+=`<tr>
+      <td><span class="set-num">${s+1}</span></td>
+      <td><span style="font-family:'DM Mono';font-size:13px;color:var(--text3)">${ex.target_reps}</span></td>
+      <td><input class="mini-input" type="number" id="ist_${ei}_${s}" value="${sessionData['ist_'+ei+'_'+s]||''}" placeholder="\u2013" onchange="saveIst(${ei},${s},this.value)"></td>
+      <td><button class="check-btn ${done?'done':''}" onclick="toggleDone(${ei},${s})">
+        ${done
+          ?`<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="22" height="22"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
+          :`<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="22" height="22"><circle cx="12" cy="12" r="9" stroke-width="2"/></svg>`}
+      </button></td>
+    </tr>`;
+  }
+
+  c.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:12px;color:var(--text3)">\u00dcbung ${ei+1} von ${exs.length}</div>
+      <div id="session-timer" style="font-family:'DM Mono';font-size:13px;color:var(--accent);background:rgba(34,211,238,0.1);padding:3px 10px;border-radius:20px">${formatDuration(sessionStartTime?Math.floor((Date.now()-sessionStartTime)/1000):0)}</div>
+    </div>
+    <div class="session-card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div>
           <div class="session-ex-title" style="margin-bottom:0">${esc(ex.name)}</div>
@@ -507,26 +595,46 @@ async function renderSession(v,c) {
         </button>`:''}
       </div>
       ${kgBlock}
+      <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
+        <button class="icon-btn" style="font-size:12px;color:var(--accent);padding:3px 8px;border:1px solid rgba(34,211,238,0.3);border-radius:6px;gap:4px" onclick="copyTargetReps(${ei},${ex.sets},${ex.target_reps})">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          Ziel-Wdh. \u00fcbernehmen
+        </button>
+      </div>
       <table class="sets-table">
         <thead><tr><th>Satz</th><th>Ziel Wdh.</th><th>Ist Wdh.</th><th></th></tr></thead>
-        <tbody>`;
-    for(let s=0;s<ex.sets;s++){
-      const done=sessionData[`done_${ei}_${s}`];
-      h+=`<tr>
-        <td><span class="set-num">${s+1}</span></td>
-        <td><span style="font-family:'DM Mono';font-size:13px;color:var(--text3)">${ex.target_reps}</span></td>
-        <td><input class="mini-input" type="number" id="ist_${ei}_${s}" value="${sessionData['ist_'+ei+'_'+s]||''}" placeholder="–" onchange="saveIst(${ei},${s},this.value)"></td>
-        <td><button class="check-btn ${done?'done':''}" onclick="toggleDone(${ei},${s},'${v.unitId}')">
-          ${done
-            ? `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="22" height="22"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
-            : `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="22" height="22"><circle cx="12" cy="12" r="9" stroke-width="2"/></svg>`}
-        </button></td>
-      </tr>`;
-    }
-    h+=`</tbody></table></div>`;
-  });
-  h+=`<button class="btn-primary" onclick="finishSession('${v.planId}','${v.planName}','${v.unitId}','${v.letter}')">✓ Einheit abschließen</button>`;
-  c.innerHTML=h;
+        <tbody>${setsHtml}</tbody>
+      </table>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      ${ei>0?`<button class="btn-secondary" style="flex:1" onclick="navEx(-1)">&#8592; Zur\u00fcck</button>`:`<div style="flex:1"></div>`}
+      ${isLast
+        ?`<button class="btn-primary" style="flex:1" onclick="finishSession('${v.planId}','${esc(v.planName)}','${v.unitId}','${v.letter}')">Training beenden</button>`
+        :`<button class="btn-primary" style="flex:1" onclick="navEx(1)">Weiter &#8594;</button>`}
+    </div>`;
+}
+
+function navEx(dir){
+  const v=currentView();
+  if(!v) return;
+  // Aktuelle Eingaben sichern
+  const kgEl=document.getElementById('kg_'+currentExIndex);
+  if(kgEl) sessionData['kg_'+currentExIndex]=kgEl.value;
+  const totEl=document.getElementById('kgtot_'+currentExIndex);
+  if(totEl) sessionData['kgtot_'+currentExIndex]=totEl.value;
+  saveSessionData();
+  currentExIndex+=dir;
+  renderSession(v,document.getElementById('content'));
+}
+
+function copyTargetReps(ei,sets,targetReps){
+  for(let s=0;s<sets;s++){
+    sessionData['ist_'+ei+'_'+s]=String(targetReps);
+    const el=document.getElementById('ist_'+ei+'_'+s);
+    if(el) el.value=targetReps;
+  }
+  saveSessionData();
+  showToast('Ziel-Wdh. \u00fcbernommen');
 }
 
 function calcTotal(ei,equip){
@@ -547,7 +655,7 @@ function saveIst(ei,si,val){
   if(v){sessionData['ist_'+ei+'_'+si]=val;saveSessionData();}
 }
 
-function toggleDone(ei,si,unitId){
+function toggleDone(ei,si){
   const istEl=document.getElementById('ist_'+ei+'_'+si);
   if(istEl) sessionData['ist_'+ei+'_'+si]=istEl.value;
   const kgEl=document.getElementById('kg_'+ei);
@@ -559,13 +667,15 @@ function toggleDone(ei,si,unitId){
 }
 
 async function finishSession(planId,planName,unitId,letter){
+  const duration=stopTimer();
   const {data:exs} = await sb.from('exercises').select('*').eq('unit_id',unitId).order('sort_order');
   const now=new Date();
   const week=getWeek(now);
   const {data:sess,error:se} = await sb.from('sessions').insert({
     user_id:currentUser.id,plan_id:planId,unit_id:unitId,
     letter,plan_name:planName,
-    trained_at:now.toISOString().slice(0,10),week_number:week
+    trained_at:now.toISOString().slice(0,10),week_number:week,
+    duration_seconds:duration
   }).select().single();
   if(se) {showToast('Fehler beim Speichern');return;}
   const sets=[];
@@ -583,9 +693,10 @@ async function finishSession(planId,planName,unitId,letter){
   });
   if(sets.length) await sb.from('session_sets').insert(sets);
   sessionData={};
+  currentExIndex=0;
   sessionStorage.removeItem('tt_session');
   goBack();goBack();
-  showToast('Einheit gespeichert 💪');
+  showToast('Training gespeichert \ud83d\udcaa '+formatDuration(duration));
 }
 
 // --- LOG ---
