@@ -864,6 +864,11 @@ function showToast(msg){
 sb.auth.getSession().then(({data:{session}})=>{
   if(session){currentUser=session.user;document.getElementById('auth-screen').style.display='none';document.getElementById('app').style.display='flex';setTab('plans');}
 });
+
+// Service Worker registrieren
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
 </script>
 </body>
 </html>
