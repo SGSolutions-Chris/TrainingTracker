@@ -903,6 +903,20 @@ sb.auth.getSession().then(({data:{session}})=>{
     if(restored && viewStack.length){
       document.getElementById('back-btn').style.display='';
       document.getElementById('logout-btn').style.display='none';
+      const v=viewStack[viewStack.length-1];
+      if(v.type==='plan'){
+        document.getElementById('topbar-title').textContent=v.planName||'Plan';
+        document.getElementById('topbar-sub').textContent='Einheiten';
+      } else if(v.type==='unit'){
+        document.getElementById('topbar-title').textContent='Einheit '+v.letter+(v.unitName?' \u2013 '+v.unitName:'');
+        document.getElementById('topbar-sub').textContent=v.planName||'';
+      } else if(v.type==='session'){
+        document.getElementById('topbar-title').textContent='Training \u00b7 '+v.letter;
+        document.getElementById('topbar-sub').textContent=v.planName||'';
+      } else if(v.type==='logEntry'){
+        document.getElementById('topbar-title').textContent=v.sessionId||'';
+        document.getElementById('topbar-sub').textContent='';
+      }
     }
     ['plans','log','stats'].forEach(x=>{
       document.getElementById('nav-'+x).classList.toggle('active',x===currentTab);
