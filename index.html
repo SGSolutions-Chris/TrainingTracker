@@ -438,26 +438,48 @@ async function renderSession(v,c) {
 
   let h='';
   exs.forEach((ex,ei)=>{
-    const tKg=sessionData['kg_'+ei]!==undefined ? sessionData['kg_'+ei] : (ex.target_kg_per_side||'');
+    const equip=ex.equipment_type||'dumbbell';
+    const isBody=equip==='bodyweight';
+    const isBarbell=equip==='barbell';
+    const tKg=sessionData['kg_'+ei]!==undefined ? sessionData['kg_'+ei] : (isBarbell ? (ex.target_kg_total||'') : (ex.target_kg_per_side||''));
     const tKgTot=sessionData['kgtot_'+ei]!==undefined ? sessionData['kgtot_'+ei] : (ex.target_kg_total||'');
+    const equipLabel={'dumbbell':'Kurzhantel / Kabelzug','barbell':'Langhantel / Maschine','bodyweight':'K\u00f6rpergewicht'}[equip]||equip;
+
+    let kgBlock='';
+    if(!isBody){
+      if(isBarbell){
+        kgBlock=`<div style="display:flex;gap:10px;margin-bottom:10px">
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em">KG gesamt <span style="color:var(--accent);font-size:10px">${ex.target_kg_total?'Ziel: '+ex.target_kg_total:''}</span></div>
+            <input class="mini-input" style="width:100%" type="number" step="0.5" id="kg_${ei}" value="${tKg}" placeholder="${ex.target_kg_total||'0'}" oninput="calcTotal(${ei},'barbell')">
+          </div>
+        </div>`;
+      } else {
+        kgBlock=`<div style="display:flex;gap:10px;margin-bottom:10px">
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em">KG/Seite <span style="color:var(--accent);font-size:10px">${ex.target_kg_per_side?'Ziel: '+ex.target_kg_per_side:''}</span></div>
+            <input class="mini-input" style="width:100%" type="number" step="0.5" id="kg_${ei}" value="${tKg}" placeholder="${ex.target_kg_per_side||'0'}" oninput="calcTotal(${ei},'dumbbell')">
+          </div>
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em">KG gesamt <span style="color:var(--accent);font-size:10px">${ex.target_kg_total?'Ziel: '+ex.target_kg_total:''}</span></div>
+            <input class="mini-input" style="width:100%;color:var(--text3)" type="number" step="0.5" id="kgtot_${ei}" value="${tKgTot}" placeholder="${ex.target_kg_total||'0'}" readonly>
+          </div>
+        </div>`;
+      }
+    }
+
     h+=`<div class="session-card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div class="session-ex-title" style="margin-bottom:0">${esc(ex.name)}</div>
-        <button class="icon-btn" style="font-size:13px;color:var(--accent);gap:3px;padding:4px 8px;border:1px solid rgba(34,211,238,0.3);border-radius:6px" onclick="showUpdateTargetKgModal('${ex.id}',${ei})">
+        <div>
+          <div class="session-ex-title" style="margin-bottom:0">${esc(ex.name)}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${equipLabel}</div>
+        </div>
+        ${!isBody?`<button class="icon-btn" style="font-size:13px;color:var(--accent);gap:3px;padding:4px 8px;border:1px solid rgba(34,211,238,0.3);border-radius:6px" onclick="showUpdateTargetKgModal('${ex.id}',${ei},'${equip}')">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
           Ziel-KG
-        </button>
+        </button>`:''}
       </div>
-      <div style="display:flex;gap:10px;margin-bottom:10px">
-        <div style="flex:1">
-          <div style="font-size:11px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em">KG/Seite <span style="color:var(--accent);font-size:10px">${ex.target_kg_per_side?'Ziel: '+ex.target_kg_per_side:''}</span></div>
-          <input class="mini-input" style="width:100%" type="number" step="0.5" id="kg_${ei}" value="${tKg}" placeholder="${ex.target_kg_per_side||'0'}" oninput="calcTotal(${ei})">
-        </div>
-        <div style="flex:1">
-          <div style="font-size:11px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em">KG gesamt <span style="color:var(--accent);font-size:10px">${ex.target_kg_total?'Ziel: '+ex.target_kg_total:''}</span></div>
-          <input class="mini-input" style="width:100%;color:var(--text3)" type="number" step="0.5" id="kgtot_${ei}" value="${tKgTot}" placeholder="${ex.target_kg_total||'0'}" readonly>
-        </div>
-      </div>
+      ${kgBlock}
       <table class="sets-table">
         <thead><tr><th>Satz</th><th>Ziel Wdh.</th><th>Ist Wdh.</th><th></th></tr></thead>
         <tbody>`;
@@ -480,12 +502,16 @@ async function renderSession(v,c) {
   c.innerHTML=h;
 }
 
-function calcTotal(ei){
+function calcTotal(ei,equip){
   const kg=parseFloat(document.getElementById('kg_'+ei)?.value)||0;
   const tot=document.getElementById('kgtot_'+ei);
-  if(tot) tot.value=kg>0?(kg*2).toFixed(1).replace(/\.0$/,''):'';
+  if(tot&&equip==='dumbbell') tot.value=kg>0?(kg*2).toFixed(1).replace(/\.0$/,''):'';
   const v=currentView();
-  if(v){sessionData['kg_'+ei]=document.getElementById('kg_'+ei)?.value||'';sessionData['kgtot_'+ei]=tot?.value||'';}
+  if(v){
+    sessionData['kg_'+ei]=document.getElementById('kg_'+ei)?.value||'';
+    if(tot) sessionData['kgtot_'+ei]=tot.value;
+    else sessionData['kgtot_'+ei]=String(kg||'');
+  }
 }
 
 function saveIst(ei,si,val){
@@ -692,36 +718,66 @@ async function deleteUnit(id){
 
 function showAddExerciseModal(unitId){
   modal(`<div class="modal-title">&Uuml;bung hinzuf&uuml;gen <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
-    <div class="modal-field"><label>Name</label><input id="m-ex-name" placeholder="z.B. Langhantel Kniebeuge" maxlength="80" autofocus></div>
+    <div class="modal-field"><label>Name</label><input id="m-ex-name" placeholder="z.B. Kniebeuge" maxlength="80" autofocus></div>
+    <div class="modal-field"><label>Ger&auml;tetyp</label>
+      <select id="m-ex-equip" onchange="updateExModalKgFields()">
+        <option value="dumbbell">Kurzhantel / Kabelzug (&times;2)</option>
+        <option value="barbell">Langhantel / Maschine (&times;1)</option>
+        <option value="bodyweight">K&ouml;rpergewicht (kein KG)</option>
+      </select>
+    </div>
     <div class="modal-row">
       <div class="modal-field"><label>S&auml;tze</label><input id="m-ex-sets" type="number" min="1" max="10" value="3"></div>
       <div class="modal-field"><label>Ziel-Wdh.</label><input id="m-ex-reps" type="number" min="1" max="100" value="10"></div>
     </div>
-    <div class="modal-row">
-      <div class="modal-field"><label>Ziel KG/Seite</label><input id="m-ex-kg" type="number" step="0.5" min="0" placeholder="z.B. 40"></div>
-      <div class="modal-field"><label>Ziel KG gesamt</label><input id="m-ex-kgtot" type="number" step="0.5" min="0" placeholder="z.B. 80" readonly style="color:var(--text3)"></div>
+    <div id="m-ex-kg-section">
+      <div class="modal-row">
+        <div class="modal-field"><label id="m-ex-kg-label">Ziel KG/Seite</label><input id="m-ex-kg" type="number" step="0.5" min="0" placeholder="z.B. 40" oninput="updateExModalKgTotal()"></div>
+        <div class="modal-field" id="m-ex-kgtot-wrap"><label>Ziel KG gesamt</label><input id="m-ex-kgtot" type="number" step="0.5" min="0" placeholder="z.B. 80" readonly style="color:var(--text3)"></div>
+      </div>
     </div>
-    <div style="font-size:12px;color:var(--text3);margin:-4px 0 10px">KG gesamt wird automatisch berechnet (KG/Seite &times; 2)</div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeModal()">Abbrechen</button>
       <button class="btn-primary" onclick="createExercise('${unitId}')">Hinzuf&uuml;gen</button>
     </div>`);
-  document.getElementById('m-ex-kg').addEventListener('input',function(){
-    const v=parseFloat(this.value)||0;
-    document.getElementById('m-ex-kgtot').value=v>0?(v*2).toFixed(1).replace(/\.0$/,''):'';
-  });
+}
+
+function updateExModalKgFields(){
+  const eq=document.getElementById('m-ex-equip').value;
+  const sec=document.getElementById('m-ex-kg-section');
+  const lbl=document.getElementById('m-ex-kg-label');
+  const totWrap=document.getElementById('m-ex-kgtot-wrap');
+  if(eq==='bodyweight'){sec.style.display='none';return;}
+  sec.style.display='';
+  if(eq==='barbell'){lbl.textContent='Ziel KG gesamt';totWrap.style.display='none';}
+  else{lbl.textContent='Ziel KG/Seite';totWrap.style.display='';}
+  updateExModalKgTotal();
+}
+
+function updateExModalKgTotal(){
+  const eq=document.getElementById('m-ex-equip')?.value;
+  const kg=parseFloat(document.getElementById('m-ex-kg')?.value)||0;
+  const tot=document.getElementById('m-ex-kgtot');
+  if(tot&&eq==='dumbbell') tot.value=kg>0?(kg*2).toFixed(1).replace(/\.0$/,''):'';
 }
 
 async function createExercise(unitId){
   const name=document.getElementById('m-ex-name').value.trim();
   const sets=parseInt(document.getElementById('m-ex-sets').value)||3;
   const reps=parseInt(document.getElementById('m-ex-reps').value)||10;
-  const kgSide=parseFloat(document.getElementById('m-ex-kg').value)||null;
-  const kgTot=parseFloat(document.getElementById('m-ex-kgtot').value)||null;
+  const equip=document.getElementById('m-ex-equip').value;
+  let kgSide=null,kgTot=null;
+  if(equip==='dumbbell'){
+    kgSide=parseFloat(document.getElementById('m-ex-kg').value)||null;
+    kgTot=parseFloat(document.getElementById('m-ex-kgtot').value)||null;
+  } else if(equip==='barbell'){
+    kgTot=parseFloat(document.getElementById('m-ex-kg').value)||null;
+    kgSide=null;
+  }
   if(!name)return;
   const {data:existing}=await sb.from('exercises').select('sort_order').eq('unit_id',unitId).order('sort_order',{ascending:false}).limit(1);
   const sort=(existing?.[0]?.sort_order||0)+1;
-  const {error}=await sb.from('exercises').insert({unit_id:unitId,name,sets,target_reps:reps,target_kg_per_side:kgSide,target_kg_total:kgTot,sort_order:sort});
+  const {error}=await sb.from('exercises').insert({unit_id:unitId,name,sets,target_reps:reps,equipment_type:equip,target_kg_per_side:kgSide,target_kg_total:kgTot,sort_order:sort});
   if(error){showToast('Fehler: '+error.message);return;}
   closeModal();
   const v=currentView();
@@ -729,33 +785,44 @@ async function createExercise(unitId){
   showToast('\u00dcbung hinzugef\u00fcgt');
 }
 
-function showUpdateTargetKgModal(exId,ei){
+function showUpdateTargetKgModal(exId,ei,equip){
+  equip=equip||'dumbbell';
+  const isBarbell=equip==='barbell';
   const kgEl=document.getElementById('kg_'+ei);
   const curKg=kgEl?kgEl.value:'';
+  const kgLbl=isBarbell?'Neues Ziel KG gesamt':'Neues Ziel KG/Seite';
+  const totField=isBarbell?'':`
+    <div class="modal-field"><label>Ziel KG gesamt</label><input id="m-upd-kgtot" type="number" step="0.5" min="0" readonly style="color:var(--text3)" value="${curKg?(parseFloat(curKg)*2).toFixed(1).replace(/\.0$/,''):''}"></div>`;
   modal(`<div class="modal-title">Ziel-KG aktualisieren <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
-    <div style="font-size:13px;color:var(--text3);margin-bottom:14px">Das neue Ziel-KG wird f&uuml;r diese und alle zuk&uuml;nftigen Einheiten gespeichert. Vergangene Einheiten bleiben unver&auml;ndert.</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:14px">Wird f&uuml;r diese und alle zuk&uuml;nftigen Einheiten gespeichert. Historische Einheiten bleiben unver&auml;ndert.</div>
     <div class="modal-row">
-      <div class="modal-field"><label>Neues Ziel KG/Seite</label><input id="m-upd-kg" type="number" step="0.5" min="0" placeholder="z.B. 45" value="${curKg}" autofocus></div>
-      <div class="modal-field"><label>Ziel KG gesamt</label><input id="m-upd-kgtot" type="number" step="0.5" min="0" placeholder="z.B. 90" readonly style="color:var(--text3)" value="${curKg?(parseFloat(curKg)*2).toFixed(1).replace(/\.0$/,''):''}"></div>
+      <div class="modal-field"><label>${kgLbl}</label><input id="m-upd-kg" type="number" step="0.5" min="0" placeholder="z.B. 45" value="${curKg}" autofocus></div>
+      ${totField}
     </div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeModal()">Abbrechen</button>
-      <button class="btn-primary" onclick="updateTargetKg('${exId}',${ei})">Speichern</button>
+      <button class="btn-primary" onclick="updateTargetKg('${exId}',${ei},'${equip}')">Speichern</button>
     </div>`);
-  document.getElementById('m-upd-kg').addEventListener('input',function(){
-    const v=parseFloat(this.value)||0;
-    document.getElementById('m-upd-kgtot').value=v>0?(v*2).toFixed(1).replace(/\.0$/,''):'';
-  });
+  if(!isBarbell){
+    document.getElementById('m-upd-kg').addEventListener('input',function(){
+      const v=parseFloat(this.value)||0;
+      const tot=document.getElementById('m-upd-kgtot');
+      if(tot) tot.value=v>0?(v*2).toFixed(1).replace(/\.0$/,''):'';
+    });
+  }
 }
 
-async function updateTargetKg(exId,ei){
-  const kgSide=parseFloat(document.getElementById('m-upd-kg').value)||null;
-  const kgTot=parseFloat(document.getElementById('m-upd-kgtot').value)||null;
+async function updateTargetKg(exId,ei,equip){
+  equip=equip||'dumbbell';
+  const isBarbell=equip==='barbell';
+  const kg=parseFloat(document.getElementById('m-upd-kg').value)||null;
+  const kgSide=isBarbell?null:kg;
+  const kgTot=isBarbell?kg:(parseFloat(document.getElementById('m-upd-kgtot')?.value)||null);
   const {error}=await sb.from('exercises').update({target_kg_per_side:kgSide,target_kg_total:kgTot}).eq('id',exId);
   if(error){showToast('Fehler: '+error.message);return;}
-  if(kgSide!==null){
-    sessionData['kg_'+ei]=String(kgSide);
-    sessionData['kgtot_'+ei]=String(kgTot||'');
+  if(kg!==null){
+    sessionData['kg_'+ei]=String(kg);
+    sessionData['kgtot_'+ei]=String(kgTot||kg);
   }
   closeModal();
   const v=currentView();
