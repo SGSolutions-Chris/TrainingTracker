@@ -271,10 +271,18 @@ async function doAuth(mode='login') {
 }
 
 async function doLogout() {
-  await sb.auth.signOut();
+  await sb.auth.signOut({scope:'local'});
+  // Alle Storage-Varianten leeren
   localStorage.clear();
   sessionStorage.clear();
-  window.location.reload();
+  // Supabase-spezifische Keys explizit entfernen
+  Object.keys(localStorage).forEach(k=>localStorage.removeItem(k));
+  Object.keys(sessionStorage).forEach(k=>sessionStorage.removeItem(k));
+  // IndexedDB leeren falls Supabase dort speichert
+  if(window.indexedDB){
+    indexedDB.databases?.().then(dbs=>dbs.forEach(db=>indexedDB.deleteDatabase(db.name))).catch(()=>{});
+  }
+  window.location.href=window.location.href;
 }
 
 sb.auth.onAuthStateChange((event, session) => {
