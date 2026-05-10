@@ -412,12 +412,18 @@ async function renderUnitDetail(v,c) {
     h+=`<div class="empty" style="padding:24px"><div class="empty-icon">🏋</div><div class="empty-title">Noch keine Übungen</div></div>`;
   } else {
     h+=`<div class="card" style="cursor:default">`;
+    window._exCache={};
     exs.forEach(ex=>{
-      const kgInfo=ex.target_kg_per_side?` &middot; Ziel: ${ex.target_kg_per_side} kg/S`:'';
+      window._exCache[ex.id]=ex;
+      const kgInfo=ex.target_kg_per_side?` &middot; Ziel: ${ex.target_kg_per_side} kg/S`:(ex.target_kg_total?` &middot; Ziel: ${ex.target_kg_total} kg`:'');
+      const equipLabel={'dumbbell':'Kurzhantel','barbell':'Langhantel','bodyweight':'K\u00f6rpergewicht'}[ex.equipment_type||'dumbbell'];
       h+=`<div class="ex-row">
-        <div style="flex:1"><div class="ex-name">${esc(ex.name)}</div><div class="ex-detail">${ex.sets} S&auml;tze &middot; ${ex.target_reps} Wdh.${kgInfo}</div></div>
+        <div style="flex:1"><div class="ex-name">${esc(ex.name)}</div><div class="ex-detail">${ex.sets} S&auml;tze &middot; ${ex.target_reps} Wdh. &middot; ${equipLabel}${kgInfo}</div></div>
+        <button class="icon-btn" onclick="showEditExerciseModal('${ex.id}')" style="margin-right:2px">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="17" height="17"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        </button>
         <button class="icon-btn" style="color:var(--red)" onclick="deleteExercise('${ex.id}')">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="17" height="17"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
         </button>
       </div>`;
     });
@@ -819,7 +825,80 @@ function showUpdateTargetKgModal(exId,ei,equip){
   }
 }
 
-async function updateTargetKg(exId,ei,equip){
+function showEditExerciseModal(exId){
+  const ex=window._exCache[exId];
+  if(!ex){showToast('Fehler: \u00dcbung nicht gefunden');return;}
+  const equip=ex.equipment_type||'dumbbell';
+  const isBarbell=equip==='barbell';
+  const isBody=equip==='bodyweight';
+  const curKg=isBarbell?(ex.target_kg_total||''):(ex.target_kg_per_side||'');
+  const curKgTot=ex.target_kg_total||'';
+  modal(`<div class="modal-title">&Uuml;bung bearbeiten <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div class="modal-field"><label>Name</label><input id="e-ex-name" value="${esc(ex.name)}" maxlength="80" autofocus></div>
+    <div class="modal-field"><label>Ger&auml;tetyp</label>
+      <select id="e-ex-equip" onchange="updateEditExModalKgFields()">
+        <option value="dumbbell" ${equip==='dumbbell'?'selected':''}>Kurzhantel / Kabelzug (&times;2)</option>
+        <option value="barbell" ${equip==='barbell'?'selected':''}>Langhantel / Maschine (&times;1)</option>
+        <option value="bodyweight" ${equip==='bodyweight'?'selected':''}>K&ouml;rpergewicht (kein KG)</option>
+      </select>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field"><label>S&auml;tze</label><input id="e-ex-sets" type="number" min="1" max="10" value="${ex.sets}"></div>
+      <div class="modal-field"><label>Ziel-Wdh.</label><input id="e-ex-reps" type="number" min="1" max="100" value="${ex.target_reps}"></div>
+    </div>
+    <div id="e-ex-kg-section" ${isBody?'style="display:none"':''}>
+      <div class="modal-row">
+        <div class="modal-field"><label id="e-ex-kg-label">${isBarbell?'Ziel KG gesamt':'Ziel KG/Seite'}</label><input id="e-ex-kg" type="number" step="0.5" min="0" value="${curKg}" oninput="updateEditExModalKgTotal()"></div>
+        <div class="modal-field" id="e-ex-kgtot-wrap" ${isBarbell?'style="display:none"':''}>
+          <label>Ziel KG gesamt</label><input id="e-ex-kgtot" type="number" step="0.5" min="0" value="${curKgTot}" readonly style="color:var(--text3)">
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-primary" onclick="updateExercise('${exId}')">Speichern</button>
+    </div>`);
+}
+
+function updateEditExModalKgFields(){
+  const eq=document.getElementById('e-ex-equip').value;
+  const sec=document.getElementById('e-ex-kg-section');
+  const lbl=document.getElementById('e-ex-kg-label');
+  const totWrap=document.getElementById('e-ex-kgtot-wrap');
+  if(eq==='bodyweight'){sec.style.display='none';return;}
+  sec.style.display='';
+  if(eq==='barbell'){lbl.textContent='Ziel KG gesamt';totWrap.style.display='none';}
+  else{lbl.textContent='Ziel KG/Seite';totWrap.style.display='';}
+  updateEditExModalKgTotal();
+}
+
+function updateEditExModalKgTotal(){
+  const eq=document.getElementById('e-ex-equip')?.value;
+  const kg=parseFloat(document.getElementById('e-ex-kg')?.value)||0;
+  const tot=document.getElementById('e-ex-kgtot');
+  if(tot&&eq==='dumbbell') tot.value=kg>0?(kg*2).toFixed(1).replace(/\.0$/,''):'';
+}
+
+async function updateExercise(exId){
+  const name=document.getElementById('e-ex-name').value.trim();
+  const sets=parseInt(document.getElementById('e-ex-sets').value)||3;
+  const reps=parseInt(document.getElementById('e-ex-reps').value)||10;
+  const equip=document.getElementById('e-ex-equip').value;
+  let kgSide=null,kgTot=null;
+  if(equip==='dumbbell'){
+    kgSide=parseFloat(document.getElementById('e-ex-kg').value)||null;
+    kgTot=parseFloat(document.getElementById('e-ex-kgtot').value)||null;
+  } else if(equip==='barbell'){
+    kgTot=parseFloat(document.getElementById('e-ex-kg').value)||null;
+  }
+  if(!name)return;
+  const {error}=await sb.from('exercises').update({name,sets,target_reps:reps,equipment_type:equip,target_kg_per_side:kgSide,target_kg_total:kgTot}).eq('id',exId);
+  if(error){showToast('Fehler: '+error.message);return;}
+  closeModal();
+  const v=currentView();
+  if(v) await renderUnitDetail(v,document.getElementById('content'));
+  showToast('\u00dcbung gespeichert');
+}
   equip=equip||'dumbbell';
   const isBarbell=equip==='barbell';
   const kg=parseFloat(document.getElementById('m-upd-kg').value)||null;
