@@ -899,6 +899,8 @@ async function updateExercise(exId){
   if(v) await renderUnitDetail(v,document.getElementById('content'));
   showToast('\u00dcbung gespeichert');
 }
+
+async function updateTargetKg(exId,ei,equip){
   equip=equip||'dumbbell';
   const isBarbell=equip==='barbell';
   const kg=parseFloat(document.getElementById('m-upd-kg').value)||null;
