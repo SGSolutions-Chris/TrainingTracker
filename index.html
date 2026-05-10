@@ -294,6 +294,7 @@ function setTab(t) {
   document.getElementById('logout-btn').style.display='';
   document.getElementById('topbar-title').textContent='Training Tracker';
   document.getElementById('topbar-sub').textContent='';
+  saveNavState();
   render();
 }
 
@@ -301,6 +302,7 @@ function pushView(v) {
   viewStack.push(v);
   document.getElementById('back-btn').style.display='';
   document.getElementById('logout-btn').style.display='none';
+  saveNavState();
   render();
 }
 
@@ -313,6 +315,7 @@ function goBack() {
     document.getElementById('topbar-sub').textContent='';
   }
   sessionData={};
+  saveNavState();
   render();
 }
 
@@ -511,12 +514,13 @@ function calcTotal(ei,equip){
     sessionData['kg_'+ei]=document.getElementById('kg_'+ei)?.value||'';
     if(tot) sessionData['kgtot_'+ei]=tot.value;
     else sessionData['kgtot_'+ei]=String(kg||'');
+    saveSessionData();
   }
 }
 
 function saveIst(ei,si,val){
   const v=currentView();
-  if(v) sessionData['ist_'+ei+'_'+si]=val;
+  if(v){sessionData['ist_'+ei+'_'+si]=val;saveSessionData();}
 }
 
 function toggleDone(ei,si,unitId){
@@ -525,6 +529,7 @@ function toggleDone(ei,si,unitId){
   const kgEl=document.getElementById('kg_'+ei);
   if(kgEl){sessionData['kg_'+ei]=kgEl.value;const t=document.getElementById('kgtot_'+ei);if(t)sessionData['kgtot_'+ei]=t.value;}
   sessionData['done_'+ei+'_'+si]=!sessionData['done_'+ei+'_'+si];
+  saveSessionData();
   const v=currentView();
   if(v) renderSession(v,document.getElementById('content'));
 }
@@ -554,6 +559,7 @@ async function finishSession(planId,planName,unitId,letter){
   });
   if(sets.length) await sb.from('session_sets').insert(sets);
   sessionData={};
+  sessionStorage.removeItem('tt_session');
   goBack();goBack();
   showToast('Einheit gespeichert 💪');
 }
@@ -860,9 +866,49 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2500);
 }
 
+function saveNavState(){
+  try{sessionStorage.setItem('tt_nav',JSON.stringify({tab:currentTab,stack:viewStack}));}catch(e){}
+}
+
+function saveSessionData(){
+  try{sessionStorage.setItem('tt_session',JSON.stringify(sessionData));}catch(e){}
+}
+
+function restoreNavState(){
+  try{
+    const s=sessionStorage.getItem('tt_nav');
+    if(!s) return false;
+    const {tab,stack}=JSON.parse(s);
+    currentTab=tab||'plans';
+    viewStack=stack||[];
+    return true;
+  }catch(e){return false;}
+}
+
+function restoreSessionData(){
+  try{
+    const s=sessionStorage.getItem('tt_session');
+    if(s) sessionData=JSON.parse(s);
+  }catch(e){}
+}
+
 // Init: check session
 sb.auth.getSession().then(({data:{session}})=>{
-  if(session){currentUser=session.user;document.getElementById('auth-screen').style.display='none';document.getElementById('app').style.display='flex';setTab('plans');}
+  if(session){
+    currentUser=session.user;
+    document.getElementById('auth-screen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    const restored=restoreNavState();
+    restoreSessionData();
+    if(restored && viewStack.length){
+      document.getElementById('back-btn').style.display='';
+      document.getElementById('logout-btn').style.display='none';
+    }
+    ['plans','log','stats'].forEach(x=>{
+      document.getElementById('nav-'+x).classList.toggle('active',x===currentTab);
+    });
+    render();
+  }
 });
 
 // Service Worker registrieren
