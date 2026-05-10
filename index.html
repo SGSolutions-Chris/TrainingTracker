@@ -648,9 +648,9 @@ async function createPlan(){
 }
 
 async function deletePlan(id){
-  if(!confirm('Plan wirklich löschen? Alle Einheiten und Übungen werden entfernt.'))return;
+  if(!confirm('Plan wirklich l\u00f6schen? Alle Einheiten und \u00dcbungen werden entfernt.'))return;
   await sb.from('plans').delete().eq('id',id);
-  goBack();render();showToast('Plan gelöscht');
+  goBack();render();showToast('Plan gel\u00f6scht');
 }
 
 function showAddUnitModal(planId){
@@ -674,13 +674,20 @@ async function createUnit(planId){
   const sort=(existing?.[0]?.sort_order??-1)+1;
   const {error}=await sb.from('units').insert({plan_id:planId,letter,name:name||null,sort_order:sort});
   if(error){showToast('Fehler: '+error.message);return;}
-  closeModal();render();showToast('Einheit hinzugef\u00fcgt');
+  closeModal();
+  const v=currentView();
+  if(v) await renderPlanDetail(v,document.getElementById('content'));
+  else render();
+  showToast('Einheit hinzugef\u00fcgt');
 }
 
 async function deleteUnit(id){
   if(!confirm('Einheit l\u00f6schen? Alle \u00dcbungen werden entfernt.'))return;
   await sb.from('units').delete().eq('id',id);
-  render();showToast('Einheit gel\u00f6scht');
+  const v=currentView();
+  if(v) await renderPlanDetail(v,document.getElementById('content'));
+  else render();
+  showToast('Einheit gel\u00f6scht');
 }
 
 function showAddExerciseModal(unitId){
@@ -716,7 +723,10 @@ async function createExercise(unitId){
   const sort=(existing?.[0]?.sort_order||0)+1;
   const {error}=await sb.from('exercises').insert({unit_id:unitId,name,sets,target_reps:reps,target_kg_per_side:kgSide,target_kg_total:kgTot,sort_order:sort});
   if(error){showToast('Fehler: '+error.message);return;}
-  closeModal();render();showToast('&Uuml;bung hinzugef&uuml;gt');
+  closeModal();
+  const v=currentView();
+  if(v) await renderUnitDetail(v,document.getElementById('content'));
+  showToast('\u00dcbung hinzugef\u00fcgt');
 }
 
 function showUpdateTargetKgModal(exId,ei){
@@ -754,9 +764,11 @@ async function updateTargetKg(exId,ei){
 }
 
 async function deleteExercise(id){
-  if(!confirm('Übung löschen?'))return;
+  if(!confirm('\u00dcbung l\u00f6schen?'))return;
   await sb.from('exercises').delete().eq('id',id);
-  render();showToast('Übung entfernt');
+  const v=currentView();
+  if(v) await renderUnitDetail(v,document.getElementById('content'));
+  showToast('\u00dcbung entfernt');
 }
 
 function modal(html){
