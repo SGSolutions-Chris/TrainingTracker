@@ -259,7 +259,13 @@ async function doAuth(mode='login') {
     if(res.error) throw res.error;
     if(mode==='signup' && !res.data.session) {
       errEl.style.color='var(--green)';
-      errEl.textContent='Bestätigungsmail verschickt – bitte prüfe dein Postfach.';
+      errEl.textContent='Best\u00e4tigungsmail verschickt \u2013 bitte pr\u00fcfe dein Postfach.';
+    } else if(res.data.session) {
+      currentUser = res.data.session.user;
+      document.getElementById('auth-screen').style.display='none';
+      document.getElementById('app').style.display='flex';
+      viewStack=[];
+      setTab('plans');
     }
   } catch(e) {
     errEl.style.color='var(--red)';
@@ -272,17 +278,16 @@ async function doAuth(mode='login') {
 
 async function doLogout() {
   await sb.auth.signOut({scope:'local'});
-  // Alle Storage-Varianten leeren
-  localStorage.clear();
-  sessionStorage.clear();
-  // Supabase-spezifische Keys explizit entfernen
-  Object.keys(localStorage).forEach(k=>localStorage.removeItem(k));
-  Object.keys(sessionStorage).forEach(k=>sessionStorage.removeItem(k));
-  // IndexedDB leeren falls Supabase dort speichert
-  if(window.indexedDB){
-    indexedDB.databases?.().then(dbs=>dbs.forEach(db=>indexedDB.deleteDatabase(db.name))).catch(()=>{});
-  }
-  window.location.href=window.location.href;
+  currentUser = null;
+  sessionStorage.removeItem('tt_nav');
+  sessionStorage.removeItem('tt_session');
+  viewStack = [];
+  sessionData = {};
+  document.getElementById('app').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('auth-email').value='';
+  document.getElementById('auth-password').value='';
+  document.getElementById('auth-err').textContent='';
 }
 
 sb.auth.onAuthStateChange((event, session) => {
