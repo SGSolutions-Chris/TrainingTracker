@@ -321,6 +321,8 @@ function pushView(v) {
   viewStack.push(v);
   document.getElementById('back-btn').style.display='';
   document.getElementById('logout-btn').style.display='none';
+  // History-Eintrag für Android Back-Button
+  history.pushState({view:true},'','');
   saveNavState();
   render();
 }
@@ -339,6 +341,18 @@ function goBack() {
   saveNavState();
   render();
 }
+
+// Android Back-Button abfangen
+window.addEventListener('popstate', (e)=>{
+  const v=currentView();
+  if(v&&v.type==='session'){
+    // History-Eintrag wieder hinzufügen damit wir in der App bleiben
+    history.pushState({view:true},'','');
+    showAbortWorkoutModal();
+  } else if(v){
+    goBack();
+  }
+});
 
 function currentView(){return viewStack[viewStack.length-1]||null;}
 
@@ -369,11 +383,6 @@ async function renderPlans(c) {
   if(!plans.length) {
     h+=`<div class="empty"><div class="empty-icon">&#x1F4CB;</div><div class="empty-title">Noch keine Pl\u00e4ne</div><div class="empty-sub">Erstelle deinen ersten Trainingsplan</div></div>`;
   } else {
-    // Quick-Start Button
-    h+=`<button class="btn-primary" style="width:100%;justify-content:center;margin-bottom:14px;font-size:16px;padding:14px;display:flex;align-items:center;gap:8px" onclick="showQuickStartModal()">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      Workout starten
-    </button>`;
     plans.forEach(p=>{
       const uc = p.units?.length||0;
       h+=`<div class="card" onclick="openPlan('${p.id}','${esc(p.name)}')">
@@ -384,8 +393,11 @@ async function renderPlans(c) {
       </div>`;
     });
   }
+  h+=`<button class="btn-secondary" style="width:100%;justify-content:center;margin-top:6px" onclick="showNewPlanModal()">+ Neuen Trainingsplan anlegen</button>`;
   c.innerHTML=h;
-  c.insertAdjacentHTML('beforeend',`<button class="fab" onclick="showNewPlanModal()">+</button>`);
+  c.insertAdjacentHTML('beforeend',`<button class="fab" onclick="showQuickStartModal()" title="Workout starten">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="26" height="26"><path d="M8 5v14l11-7z"/></svg>
+  </button>`);
 }
 
 async function showQuickStartModal(){
@@ -925,6 +937,62 @@ async function createExercise(unitId){
   const v=currentView();
   if(v) await renderUnitDetail(v,document.getElementById('content'));
   showToast('\u00dcbung hinzugef\u00fcgt');
+}
+
+function showAbortWorkoutModal(){
+  modal(`<div class="modal-title">Workout abbrechen? <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:16px">Dein bisheriger Fortschritt wird gespeichert.</div>
+    <div class="modal-actions">
+      <button class="btn-secondary" style="flex:1" onclick="closeModal()">Nein, weiter</button>
+      <button class="btn-danger" style="flex:1" onclick="abortWorkout()">Ja, beenden</button>
+    </div>`);
+}
+
+async function abortWorkout(){
+  const v=currentView();
+  if(!v||v.type!=='session'){closeModal();return;}
+  const duration=stopTimer();
+  const {data:exs} = await sb.from('exercises').select('*').eq('unit_id',v.unitId).order('sort_order');
+  const now=new Date();
+  const {data:sess,error:se} = await sb.from('sessions').insert({
+    user_id:currentUser.id,plan_id:v.planId,unit_id:v.unitId,
+    letter:v.letter,plan_name:v.planName,
+    trained_at:now.toISOString().slice(0,10),week_number:getWeek(now),
+    duration_seconds:duration
+  }).select().single();
+  if(!se && sess){
+    const sets=[];
+    (exs||[]).forEach((ex,ei)=>{
+      for(let s=0;s<ex.sets;s++){
+        if(sessionData['ist_'+ei+'_'+s]||sessionData['done_'+ei+'_'+s]){
+          sets.push({
+            session_id:sess.id,exercise_name:ex.name,set_number:s+1,
+            kg_per_side:parseFloat(sessionData['kg_'+ei])||null,
+            kg_total:parseFloat(sessionData['kgtot_'+ei])||null,
+            target_reps:ex.target_reps,
+            actual_reps:parseInt(sessionData['ist_'+ei+'_'+s])||null,
+            done:!!sessionData['done_'+ei+'_'+s]
+          });
+        }
+      }
+    });
+    if(sets.length) await sb.from('session_sets').insert(sets);
+  }
+  sessionData={};
+  currentExIndex=0;
+  sessionStorage.removeItem('tt_session');
+  closeModal();
+  // View-Stack bis zur Startseite leeren
+  viewStack=[];
+  saveNavState();
+  document.getElementById('back-btn').style.display='none';
+  document.getElementById('logout-btn').style.display='';
+  document.getElementById('topbar-title').textContent='Training Tracker';
+  document.getElementById('topbar-sub').textContent='';
+  currentTab='plans';
+  ['plans','log','stats'].forEach(x=>document.getElementById('nav-'+x).classList.toggle('active',x==='plans'));
+  render();
+  showToast('Workout beendet \u2014 Fortschritt gespeichert');
 }
 
 function showUpdateTargetKgModal(exId,ei,equip){
