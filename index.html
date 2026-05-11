@@ -329,7 +329,11 @@ function pushView(v) {
 
 function goBack() {
   const v=currentView();
-  if(v&&v.type==='session') stopTimer();
+  if(v&&v.type==='session'){
+    showAbortWorkoutModal();
+    return;
+  }
+  if(v) stopTimer();
   viewStack.pop();
   if(!viewStack.length) {
     document.getElementById('back-btn').style.display='none';
@@ -451,7 +455,7 @@ async function renderPlanDetail(v,c) {
             <div><div class="card-title">${esc(u.name||'Einheit '+u.letter)}</div><div class="card-sub">${ec} &Uuml;bung${ec!==1?'en':''}</div></div>
           </div>
           <button class="btn-primary" style="padding:7px 14px;font-size:13px;border-radius:8px;white-space:nowrap;margin-right:6px" onclick="startSession('${v.planId}','${esc(v.planName)}','${u.id}','${esc(u.letter)}')">&#9654;</button>
-          <button class="icon-btn" style="color:var(--red)" onclick="deleteUnit('${u.id}')">
+          <button class="icon-btn" style="color:var(--red)" onclick="confirmDeleteUnit('${u.id}','${esc(u.letter)}','${esc(u.name||'')}')">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="17" height="17"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           </button>
         </div>
@@ -459,7 +463,7 @@ async function renderPlanDetail(v,c) {
     });
   }
   h+=`<button class="btn-secondary" style="margin-bottom:10px" onclick="showAddUnitModal('${v.planId}')">+ Einheit hinzuf&uuml;gen</button>`;
-  h+=`<hr class="divider"><button class="btn-danger" onclick="deletePlan('${v.planId}')">Plan l&ouml;schen</button>`;
+  h+=`<hr class="divider"><button class="btn-danger" onclick="confirmDeletePlan('${v.planId}','${esc(v.planName)}')">Plan l&ouml;schen</button>`;
   c.innerHTML=h;
 }
 
@@ -827,8 +831,18 @@ async function createPlan(){
   closeModal();render();showToast('Plan erstellt');
 }
 
+function confirmDeletePlan(id,name){
+  modal(`<div class="modal-title">Plan l\u00f6schen? <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:6px">M\u00f6chtest du den Plan <strong>${esc(name)}</strong> wirklich l\u00f6schen?</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:16px">Alle Einheiten und \u00dcbungen des Plans werden entfernt. Deine Trainingshistorie bleibt erhalten.</div>
+    <div class="modal-actions">
+      <button class="btn-secondary" style="flex:1" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-danger" style="flex:1" onclick="deletePlan('${id}')">Ja, l\u00f6schen</button>
+    </div>`);
+}
+
 async function deletePlan(id){
-  if(!confirm('Plan wirklich l\u00f6schen? Alle Einheiten und \u00dcbungen werden entfernt.'))return;
+  closeModal();
   await sb.from('plans').delete().eq('id',id);
   goBack();render();showToast('Plan gel\u00f6scht');
 }
@@ -861,8 +875,18 @@ async function createUnit(planId){
   showToast('Einheit hinzugef\u00fcgt');
 }
 
+function confirmDeleteUnit(id,letter,name){
+  modal(`<div class="modal-title">Einheit l\u00f6schen? <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:6px">M\u00f6chtest du Einheit <strong>${esc(letter)}${name?' \u2013 '+esc(name):''}</strong> wirklich l\u00f6schen?</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:16px">Alle \u00dcbungen der Einheit werden entfernt. Deine Trainingshistorie bleibt erhalten.</div>
+    <div class="modal-actions">
+      <button class="btn-secondary" style="flex:1" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-danger" style="flex:1" onclick="deleteUnit('${id}')">Ja, l\u00f6schen</button>
+    </div>`);
+}
+
 async function deleteUnit(id){
-  if(!confirm('Einheit l\u00f6schen? Alle \u00dcbungen werden entfernt.'))return;
+  closeModal();
   await sb.from('units').delete().eq('id',id);
   const v=currentView();
   if(v) await renderPlanDetail(v,document.getElementById('content'));
