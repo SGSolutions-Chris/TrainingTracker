@@ -162,6 +162,14 @@ body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height
 
 /* Week header in log */
 .week-head{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;padding:10px 2px 4px}
+
+/* Drag & Drop */
+.drag-handle{cursor:grab;color:var(--text3);padding:4px 8px;display:flex;align-items:center;touch-action:none;user-select:none;-webkit-user-select:none}
+.drag-handle:active{cursor:grabbing;color:var(--accent)}
+.sortable-item{transition:background 0.15s}
+.sortable-item.dragging{opacity:0.35;background:var(--bg3)!important;border-radius:var(--radius)}
+.sortable-item.drag-over-top{box-shadow:0 -2px 0 var(--accent)}
+.sortable-item.drag-over-bottom{box-shadow:0 2px 0 var(--accent)}
 </style>
 </head>
 <body>
@@ -448,8 +456,11 @@ async function renderPlanDetail(v,c) {
     units.forEach((u,i)=>{
       const ec=u.exercises?.[0]?.count||0;
       const bc='bc'+(i%8);
-      h+=`<div class="card">
+      h+=`<div class="card sortable-item" data-id="${u.id}" data-type="unit">
         <div class="card-row">
+          <div class="drag-handle" onmousedown="dragStart(event)" ontouchstart="dragStart(event)">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+          </div>
           <div onclick="openUnit('${u.id}','${esc(u.letter)}','${esc(u.name||'')}','${v.planId}','${esc(v.planName)}')" style="flex:1;display:flex;align-items:center;gap:10px">
             <span class="badge ${bc}">${esc(u.letter)}</span>
             <div><div class="card-title">${esc(u.name||'Einheit '+u.letter)}</div><div class="card-sub">${ec} &Uuml;bung${ec!==1?'en':''}</div></div>
@@ -486,12 +497,15 @@ async function renderUnitDetail(v,c) {
       window._exCache[ex.id]=ex;
       const kgInfo=ex.target_kg_per_side?` &middot; Ziel: ${ex.target_kg_per_side} kg/S`:(ex.target_kg_total?` &middot; Ziel: ${ex.target_kg_total} kg`:'');
       const equipLabel={'dumbbell':'Kurzhantel','barbell':'Langhantel','bodyweight':'K\u00f6rpergewicht'}[ex.equipment_type||'dumbbell'];
-      h+=`<div class="ex-row">
+      h+=`<div class="ex-row sortable-item" data-id="${ex.id}" data-type="exercise">
+        <div class="drag-handle" onmousedown="dragStart(event)" ontouchstart="dragStart(event)">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+        </div>
         <div style="flex:1"><div class="ex-name">${esc(ex.name)}</div><div class="ex-detail">${ex.sets} S&auml;tze &middot; ${ex.target_reps} Wdh. &middot; ${equipLabel}${kgInfo}</div></div>
         <button class="icon-btn" onclick="showEditExerciseModal('${ex.id}')" style="margin-right:2px">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="17" height="17"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
         </button>
-        <button class="icon-btn" style="color:var(--red)" onclick="deleteExercise('${ex.id}')">
+        <button class="icon-btn" style="color:var(--red)" onclick="confirmDeleteExercise('${ex.id}','${esc(ex.name)}')">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="17" height="17"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
         </button>
       </div>`;
@@ -513,6 +527,7 @@ function startSession(planId,planName,unitId,letter) {
   sessionData={};
   currentExIndex=0;
   startTimer();
+  saveSessionData();
   pushView({type:'session',planId,planName,unitId,letter});
 }
 
@@ -684,6 +699,23 @@ function toggleDone(ei,si){
 }
 
 async function finishSession(planId,planName,unitId,letter){
+  // Prüfen ob mindestens ein Satz ausgefüllt wurde
+  const hasData=Object.keys(sessionData).some(k=>
+    (k.startsWith('ist_')||k.startsWith('done_'))&&sessionData[k]
+  );
+  if(!hasData){
+    modal(`<div class="modal-title">Keine Daten <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+      <div style="font-size:14px;color:var(--text2);margin-bottom:16px">Du hast noch keine Wdh. oder S\u00e4tze eingetragen. M\u00f6chtest du das Training trotzdem beenden?</div>
+      <div class="modal-actions">
+        <button class="btn-secondary" style="flex:1" onclick="closeModal()">Weiter trainieren</button>
+        <button class="btn-danger" style="flex:1" onclick="closeModal();doFinishSession('${planId}','${esc(planName)}','${unitId}','${letter}')">Trotzdem beenden</button>
+      </div>`);
+    return;
+  }
+  await doFinishSession(planId,planName,unitId,letter);
+}
+
+async function doFinishSession(planId,planName,unitId,letter){
   const duration=stopTimer();
   const {data:exs} = await sb.from('exercises').select('*').eq('unit_id',unitId).order('sort_order');
   const now=new Date();
@@ -715,7 +747,6 @@ async function finishSession(planId,planName,unitId,letter){
   goBack();goBack();
   showToast('Training gespeichert \ud83d\udcaa '+formatDuration(duration));
 }
-
 // --- LOG ---
 async function renderLog(c) {
   const {data:sessions,error} = await sb.from('sessions').select('*').eq('user_id',currentUser.id).order('trained_at',{ascending:false}).limit(100);
@@ -726,14 +757,16 @@ async function renderLog(c) {
   let h='<div class="section-label">Trainingsprotokoll</div>';
   let lastWeek='';
   sessions.forEach(s=>{
-    const wk='KW '+s.week_number+' · '+s.trained_at.slice(0,4);
+    const wk='KW '+s.week_number+' \u00b7 '+s.trained_at.slice(0,4);
     if(wk!==lastWeek){h+=`<div class="week-head">${wk}</div>`;lastWeek=wk;}
-    h+=`<div class="log-item" onclick="openLogEntry('${s.id}','${s.trained_at}','${s.letter}','${esc(s.plan_name)}')">
+    const dur=s.duration_seconds?` \u00b7 ${formatDuration(s.duration_seconds)}`:'';
+    const bc='bc'+(['A','B','C','D','E','F','G','H'].indexOf(s.letter)%8||0);
+    h+=`<div class="log-item" onclick="openLogEntry('${s.id}','${s.trained_at}','${esc(s.letter)}','${esc(s.plan_name)}')">
       <div style="display:flex;align-items:center;gap:8px">
-        <span class="badge badge-${s.letter.toLowerCase()}">${s.letter}</span>
+        <span class="badge ${bc}">${esc(s.letter)}</span>
         <span style="font-size:14px;font-weight:500">${esc(s.plan_name)}</span>
       </div>
-      <div class="log-meta">${formatDate(s.trained_at)}</div>
+      <div class="log-meta">${formatDate(s.trained_at)}${dur}</div>
     </div>`;
   });
   c.innerHTML=h;
@@ -746,7 +779,10 @@ function openLogEntry(id,date,letter,planName) {
 }
 
 async function renderLogEntry(v,c) {
-  const {data:sets,error} = await sb.from('session_sets').select('*').eq('session_id',v.sessionId).order('set_number');
+  const [{data:sess},{data:sets,error}] = await Promise.all([
+    sb.from('sessions').select('duration_seconds').eq('id',v.sessionId).single(),
+    sb.from('session_sets').select('*').eq('session_id',v.sessionId).order('set_number')
+  ]);
   if(error) throw error;
   const byEx={};
   (sets||[]).forEach(s=>{
@@ -754,6 +790,12 @@ async function renderLogEntry(v,c) {
     byEx[s.exercise_name].push(s);
   });
   let h='';
+  if(sess?.duration_seconds){
+    h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" style="color:var(--accent);flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span style="font-size:14px;color:var(--text)">Trainingsdauer: <strong>${formatDuration(sess.duration_seconds)}</strong></span>
+    </div>`;
+  }
   Object.entries(byEx).forEach(([name,exSets])=>{
     h+=`<div class="session-card" style="cursor:default">
       <div class="session-ex-title">${esc(name)}</div>
@@ -1139,8 +1181,18 @@ async function updateTargetKg(exId,ei,equip){
   showToast('Ziel-KG aktualisiert');
 }
 
+function confirmDeleteExercise(id,name){
+  modal(`<div class="modal-title">&Uuml;bung l&ouml;schen? <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:6px">M&ouml;chtest du <strong>${esc(name)}</strong> wirklich l&ouml;schen?</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:16px">Deine Trainingshistorie bleibt erhalten.</div>
+    <div class="modal-actions">
+      <button class="btn-secondary" style="flex:1" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-danger" style="flex:1" onclick="deleteExercise('${id}')">Ja, l&ouml;schen</button>
+    </div>`);
+}
+
 async function deleteExercise(id){
-  if(!confirm('\u00dcbung l\u00f6schen?'))return;
+  closeModal();
   await sb.from('exercises').delete().eq('id',id);
   const v=currentView();
   if(v) await renderUnitDetail(v,document.getElementById('content'));
@@ -1152,6 +1204,101 @@ function modal(html){
     `<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal">${html}</div></div>`;
 }
 function closeModal(){document.getElementById('modal-container').innerHTML='';}
+
+// --- DRAG & DROP ---
+let _drag={el:null,clone:null,startY:0,startX:0,offsetY:0,items:[],table:'',container:null};
+
+function dragStart(e){
+  const item=e.currentTarget.closest('.sortable-item');
+  if(!item) return;
+  e.preventDefault();
+  const touch=e.touches?.[0]||e;
+  const rect=item.getBoundingClientRect();
+  _drag.el=item;
+  _drag.startY=touch.clientY;
+  _drag.startX=touch.clientX;
+  _drag.offsetY=touch.clientY-rect.top;
+  _drag.container=item.parentElement;
+  _drag.items=[..._drag.container.querySelectorAll('.sortable-item')];
+  _drag.table=item.dataset.type==='unit'?'units':'exercises';
+
+  // Ghost clone
+  _drag.clone=item.cloneNode(true);
+  Object.assign(_drag.clone.style,{
+    position:'fixed',left:rect.left+'px',top:rect.top+'px',
+    width:rect.width+'px',zIndex:'999',opacity:'0.9',
+    pointerEvents:'none',boxShadow:'0 8px 24px rgba(0,0,0,0.4)',
+    borderRadius:'var(--radius)',background:'var(--bg2)',
+    transition:'none'
+  });
+  document.body.appendChild(_drag.clone);
+  item.classList.add('dragging');
+
+  document.addEventListener('mousemove',dragMove,{passive:false});
+  document.addEventListener('touchmove',dragMove,{passive:false});
+  document.addEventListener('mouseup',dragEnd);
+  document.addEventListener('touchend',dragEnd);
+}
+
+function dragMove(e){
+  if(!_drag.el) return;
+  e.preventDefault();
+  const touch=e.touches?.[0]||e;
+  const y=touch.clientY;
+  _drag.clone.style.top=(y-_drag.offsetY)+'px';
+
+  // Highlight target
+  _drag.items.forEach(item=>{
+    item.classList.remove('drag-over-top','drag-over-bottom');
+    if(item===_drag.el) return;
+    const r=item.getBoundingClientRect();
+    const mid=r.top+r.height/2;
+    if(y<mid && y>r.top-10) item.classList.add('drag-over-top');
+    else if(y>=mid && y<r.bottom+10) item.classList.add('drag-over-bottom');
+  });
+}
+
+async function dragEnd(e){
+  if(!_drag.el) return;
+  document.removeEventListener('mousemove',dragMove);
+  document.removeEventListener('touchmove',dragMove);
+  document.removeEventListener('mouseup',dragEnd);
+  document.removeEventListener('touchend',dragEnd);
+
+  // Find drop target
+  const touch=e.changedTouches?.[0]||e;
+  const y=touch.clientY;
+  let targetEl=null, insertBefore=true;
+  _drag.items.forEach(item=>{
+    if(item===_drag.el) return;
+    const r=item.getBoundingClientRect();
+    const mid=r.top+r.height/2;
+    if(y>=r.top-10 && y<mid){targetEl=item;insertBefore=true;}
+    else if(y>=mid && y<r.bottom+10){targetEl=item;insertBefore=false;}
+    item.classList.remove('drag-over-top','drag-over-bottom');
+  });
+
+  _drag.clone.remove();
+  _drag.el.classList.remove('dragging');
+
+  if(targetEl){
+    if(insertBefore) _drag.container.insertBefore(_drag.el,targetEl);
+    else _drag.container.insertBefore(_drag.el,targetEl.nextSibling);
+
+    // Neue Reihenfolge speichern
+    const newOrder=[..._drag.container.querySelectorAll('.sortable-item')].map((el,i)=>({id:el.dataset.id,sort_order:i}));
+    await saveSortOrder(_drag.table, newOrder);
+    showToast('Reihenfolge gespeichert');
+  }
+
+  _drag.el=null;_drag.clone=null;_drag.container=null;
+}
+
+async function saveSortOrder(table, items){
+  await Promise.all(items.map(({id,sort_order})=>
+    sb.from(table).update({sort_order}).eq('id',id)
+  ));
+}
 
 // --- UTILS ---
 function getWeek(d){
@@ -1174,7 +1321,13 @@ function saveNavState(){
 }
 
 function saveSessionData(){
-  try{sessionStorage.setItem('tt_session',JSON.stringify(sessionData));}catch(e){}
+  try{
+    sessionStorage.setItem('tt_session',JSON.stringify({
+      ...sessionData,
+      __startTime:sessionStartTime,
+      __exIndex:currentExIndex
+    }));
+  }catch(e){}
 }
 
 function restoreNavState(){
@@ -1191,7 +1344,19 @@ function restoreNavState(){
 function restoreSessionData(){
   try{
     const s=sessionStorage.getItem('tt_session');
-    if(s) sessionData=JSON.parse(s);
+    if(!s) return;
+    const parsed=JSON.parse(s);
+    const {__startTime,__exIndex,...rest}=parsed;
+    sessionData=rest;
+    currentExIndex=__exIndex||0;
+    if(__startTime){
+      sessionStartTime=__startTime;
+      if(sessionTimer) clearInterval(sessionTimer);
+      sessionTimer=setInterval(()=>{
+        const el=document.getElementById('session-timer');
+        if(el) el.textContent=formatDuration(Math.floor((Date.now()-sessionStartTime)/1000));
+      },1000);
+    }
   }catch(e){}
 }
 
