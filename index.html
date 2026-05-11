@@ -501,7 +501,7 @@ async function renderUnitDetail(v,c) {
         <div class="drag-handle" onmousedown="dragStart(event)" ontouchstart="dragStart(event)">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
         </div>
-        <div style="flex:1"><div class="ex-name">${esc(ex.name)}</div><div class="ex-detail">${ex.sets} S&auml;tze &middot; ${ex.target_reps} Wdh. &middot; ${equipLabel}${kgInfo}</div></div>
+        <div style="flex:1"><div class="ex-name">${esc(ex.name)}</div><div class="ex-detail">${ex.sets} S&auml;tze &middot; ${ex.target_reps===0?"AMRAP":ex.target_reps+" Wdh."} &middot; ${equipLabel}${kgInfo}</div></div>
         <button class="icon-btn" onclick="showEditExerciseModal('${ex.id}')" style="margin-right:2px">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="17" height="17"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
         </button>
@@ -628,10 +628,10 @@ async function renderSession(v,c) {
       </div>
       ${kgBlock}
       <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
-        <button class="icon-btn" style="font-size:12px;color:var(--accent);padding:3px 8px;border:1px solid rgba(34,211,238,0.3);border-radius:6px;gap:4px" onclick="copyTargetReps(${ei},${ex.sets},${ex.target_reps})">
+        ${ex.target_reps===0?'':`<button class="icon-btn" style="font-size:12px;color:var(--accent);padding:3px 8px;border:1px solid rgba(34,211,238,0.3);border-radius:6px;gap:4px" onclick="copyTargetReps(${ei},${ex.sets},${ex.target_reps})">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
           Ziel-Wdh. \u00fcbernehmen
-        </button>
+        </button>`}
       </div>
       <table class="sets-table">
         <thead><tr><th>Satz</th><th>Ziel Wdh.</th><th>Ist Wdh.</th><th></th></tr></thead>
@@ -948,7 +948,16 @@ function showAddExerciseModal(unitId){
     </div>
     <div class="modal-row">
       <div class="modal-field"><label>S&auml;tze</label><input id="m-ex-sets" type="number" min="1" max="10" value="3"></div>
-      <div class="modal-field"><label>Ziel-Wdh.</label><input id="m-ex-reps" type="number" min="1" max="100" value="10"></div>
+      <div class="modal-field">
+        <label>Ziel-Wdh.</label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input id="m-ex-reps" type="number" min="1" max="100" value="10" style="flex:1">
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text2);white-space:nowrap;cursor:pointer">
+            <input type="checkbox" id="m-ex-amrap" onchange="toggleAmrap('m-ex-reps','m-ex-amrap')" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+            AMRAP
+          </label>
+        </div>
+      </div>
     </div>
     <div id="m-ex-kg-section">
       <div class="modal-row">
@@ -984,7 +993,8 @@ function updateExModalKgTotal(){
 async function createExercise(unitId){
   const name=document.getElementById('m-ex-name').value.trim();
   const sets=parseInt(document.getElementById('m-ex-sets').value)||3;
-  const reps=parseInt(document.getElementById('m-ex-reps').value)||10;
+  const isAmrap=document.getElementById('m-ex-amrap')?.checked;
+  const reps=isAmrap?0:(parseInt(document.getElementById('m-ex-reps').value)||10);
   const equip=document.getElementById('m-ex-equip').value;
   let kgSide=null,kgTot=null;
   if(equip==='dumbbell'){
@@ -1096,6 +1106,7 @@ function showEditExerciseModal(exId){
   const isBody=equip==='bodyweight';
   const curKg=isBarbell?(ex.target_kg_total||''):(ex.target_kg_per_side||'');
   const curKgTot=ex.target_kg_total||'';
+  const isAmrap=ex.target_reps===0;
   modal(`<div class="modal-title">&Uuml;bung bearbeiten <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
     <div class="modal-field"><label>Name</label><input id="e-ex-name" value="${esc(ex.name)}" maxlength="80" autofocus></div>
     <div class="modal-field"><label>Ger&auml;tetyp</label>
@@ -1107,7 +1118,16 @@ function showEditExerciseModal(exId){
     </div>
     <div class="modal-row">
       <div class="modal-field"><label>S&auml;tze</label><input id="e-ex-sets" type="number" min="1" max="10" value="${ex.sets}"></div>
-      <div class="modal-field"><label>Ziel-Wdh.</label><input id="e-ex-reps" type="number" min="1" max="100" value="${ex.target_reps}"></div>
+      <div class="modal-field">
+        <label>Ziel-Wdh.</label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input id="e-ex-reps" type="number" min="1" max="100" value="${isAmrap?'':ex.target_reps}" ${isAmrap?'disabled style="color:var(--text3)"':''} style="flex:1">
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text2);white-space:nowrap;cursor:pointer">
+            <input type="checkbox" id="e-ex-amrap" ${isAmrap?'checked':''} onchange="toggleAmrap('e-ex-reps','e-ex-amrap')" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+            AMRAP
+          </label>
+        </div>
+      </div>
     </div>
     <div id="e-ex-kg-section" ${isBody?'style="display:none"':''}>
       <div class="modal-row">
@@ -1145,7 +1165,8 @@ function updateEditExModalKgTotal(){
 async function updateExercise(exId){
   const name=document.getElementById('e-ex-name').value.trim();
   const sets=parseInt(document.getElementById('e-ex-sets').value)||3;
-  const reps=parseInt(document.getElementById('e-ex-reps').value)||10;
+  const isAmrap=document.getElementById('e-ex-amrap')?.checked;
+  const reps=isAmrap?0:(parseInt(document.getElementById('e-ex-reps').value)||10);
   const equip=document.getElementById('e-ex-equip').value;
   let kgSide=null,kgTot=null;
   if(equip==='dumbbell'){
@@ -1298,6 +1319,19 @@ async function saveSortOrder(table, items){
   await Promise.all(items.map(({id,sort_order})=>
     sb.from(table).update({sort_order}).eq('id',id)
   ));
+}
+
+function toggleAmrap(repsId, checkboxId){
+  const cb=document.getElementById(checkboxId);
+  const inp=document.getElementById(repsId);
+  if(!inp) return;
+  inp.disabled=cb.checked;
+  inp.style.color=cb.checked?'var(--text3)':'';
+  if(cb.checked) inp.value='';
+}
+
+function repsLabel(targetReps){
+  return targetReps===0?'AMRAP':String(targetReps);
 }
 
 // --- UTILS ---
