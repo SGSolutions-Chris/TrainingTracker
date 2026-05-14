@@ -13,10 +13,11 @@ const ATHLETE_TABS = [
 const TRAINER_TABS = [
   { to: '/trainer/athletes', label: 'Athletes', icon: IconProfile },
   { to: '/trainer/plans',    label: 'Pläne',    icon: IconPlans },
+  { to: '/trainer/profile',  label: 'Profil',   icon: IconProfile },
 ]
 
 const ATHLETE_ROOT = ['/plans', '/log', '/stats', '/profile']
-const TRAINER_ROOT = ['/trainer/athletes', '/trainer/plans']
+const TRAINER_ROOT = ['/trainer/athletes', '/trainer/plans', '/trainer/profile']
 
 const STATIC_TITLES = {
   '/plans':            'Trainingspläne',
@@ -25,6 +26,7 @@ const STATIC_TITLES = {
   '/profile':          'Profil',
   '/trainer/athletes': 'Athletes',
   '/trainer/plans':    'Pläne',
+  '/trainer/profile':  'Profil',
 }
 
 export default function Layout() {

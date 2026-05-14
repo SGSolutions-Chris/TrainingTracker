@@ -21,6 +21,7 @@ import TrainerAthleteDetail     from './pages/trainer/AthleteDetail'
 import TrainerAthleteLog        from './pages/trainer/AthleteLog'
 import TrainerAthleteSession    from './pages/trainer/AthleteSessionDetail'
 import TrainerPlans             from './pages/trainer/Plans'
+import TrainerProfile           from './pages/trainer/Profile'
 
 function ProtectedRoutes() {
   const { user, role, loading } = useAuth()
@@ -46,6 +47,7 @@ function ProtectedRoutes() {
           <Route path="/trainer/plans"                                element={<TrainerPlans />} />
           <Route path="/trainer/plans/:planId"                        element={<PlanDetail />} />
           <Route path="/trainer/plans/:planId/units/:unitId"          element={<UnitDetail />} />
+          <Route path="/trainer/profile"                             element={<TrainerProfile />} />
           <Route path="*"                                             element={<Navigate to="/trainer/athletes" replace />} />
         </Route>
       </Routes>
