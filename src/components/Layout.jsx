@@ -1,6 +1,9 @@
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { usePageTitle } from '../contexts/PageTitleContext'
+import { useMediaQuery } from '../hooks/useMediaQuery'
+import SideNav from './SideNav'
+import DeskTopbar from './DeskTopbar'
 import s from '../styles/Layout.module.css'
 
 const ATHLETE_TABS = [
@@ -37,15 +40,34 @@ export default function Layout() {
   const navigate = useNavigate()
   const { title: ctxTitle, subtitle: ctxSub } = usePageTitle()
 
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const isWide    = useMediaQuery('(min-width: 1280px)')
+
   const isTrainer = role === 'trainer'
-  const rootTabs = isTrainer ? TRAINER_ROOT : ATHLETE_ROOT
-  const navTabs  = isTrainer ? TRAINER_TABS : ATHLETE_TABS
+  const rootTabs  = isTrainer ? TRAINER_ROOT : ATHLETE_ROOT
+  const navTabs   = isTrainer ? TRAINER_TABS : ATHLETE_TABS
 
-  const isRootTab = rootTabs.includes(location.pathname)
+  const isRootTab   = rootTabs.includes(location.pathname)
   const staticTitle = STATIC_TITLES[location.pathname]
-  const title = ctxTitle || staticTitle || 'Training Tracker'
-  const subtitle = ctxSub || ''
+  const title       = ctxTitle || staticTitle || 'Training Tracker'
+  const subtitle    = ctxSub || ''
 
+  /* ── Desktop layout ─────────────────────────── */
+  if (isDesktop) {
+    return (
+      <div className={s.layoutDesktop}>
+        <SideNav collapsed={!isWide} />
+        <div className={s.mainArea}>
+          <DeskTopbar />
+          <main className={s.contentDesktop}>
+            <Outlet />
+          </main>
+        </div>
+      </div>
+    )
+  }
+
+  /* ── Mobile / tablet layout ─────────────────── */
   return (
     <div className={s.layout}>
       {/* ── Topbar ── */}

@@ -148,6 +148,15 @@ a {
   margin-bottom: 20px;
 }
 
+/* Desktop: give page content breathing room */
+@media (min-width: 1024px) {
+  .page {
+    padding: 28px 32px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
+
 /* ── Hero card ──────────────────────────────────── */
 .hero-card {
   background: var(--hero);
