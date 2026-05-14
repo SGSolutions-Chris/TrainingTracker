@@ -126,7 +126,7 @@ export const getProfile = (userId) =>
   supabase.from('profiles').select('*').eq('id', userId).single()
 
 export const updateProfile = (userId, data) =>
-  supabase.from('profiles').update(data).eq('id', userId)
+  supabase.from('profiles').upsert({ id: userId, ...data }).select().single()
 
 export const updatePassword = (password) =>
   supabase.auth.updateUser({ password })
