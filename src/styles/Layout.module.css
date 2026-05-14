@@ -100,16 +100,12 @@
 /* ── Floating pill bottom nav ─────────────────────── */
 .bottomNav {
   position: fixed;
-  left: 16px;
-  right: 16px;
+  left: 0;
+  right: 0;
   bottom: 14px;
-  max-width: 448px;
-  margin: 0 auto;
-  /* center within the 480px layout */
-  left: 50%;
-  transform: translateX(-50%);
   width: calc(100% - 32px);
   max-width: 448px;
+  margin: 0 auto;
 
   height: 60px;
   border-radius: var(--r-pill);
@@ -150,7 +146,7 @@
 }
 
 .navBtnActive {
-  color: #06120b;
+  color: var(--hero-accent);
 }
 
 .navBtnActive .navIcon {
