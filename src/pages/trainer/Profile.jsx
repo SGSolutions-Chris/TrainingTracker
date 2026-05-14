@@ -1,26 +1,36 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { usePageTitle } from '../../contexts/PageTitleContext'
-import { updateProfile, updatePassword } from '../../lib/db'
+import { getProfile, updateProfile, updatePassword } from '../../lib/db'
 import { getInitials } from '../../lib/utils'
 import Modal from '../../components/Modal'
 import { useToast } from '../../contexts/ToastContext'
 
 export default function TrainerProfile() {
-  const { user, profile, signOut } = useAuth()
+  const { user, signOut } = useAuth()
   const { clearPageTitle } = usePageTitle()
   const showToast = useToast()
+  const [profile, setProfile] = useState(null)
 
   const [showName, setShowName] = useState(false)
+  const [showPhone, setShowPhone] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [newName, setNewName] = useState('')
+  const [newPhone, setNewPhone] = useState('')
   const [newPw, setNewPw] = useState('')
   const [newPw2, setNewPw2] = useState('')
   const [pwErr, setPwErr] = useState('')
   const [saving, setSaving] = useState(false)
-  const [localName, setLocalName] = useState(null)
 
-  clearPageTitle()
+  useEffect(() => {
+    clearPageTitle()
+    if (user) load()
+  }, [user])
+
+  async function load() {
+    const { data } = await getProfile(user.id)
+    setProfile(data)
+  }
 
   async function handleSaveName() {
     if (!newName.trim()) return
@@ -28,9 +38,19 @@ export default function TrainerProfile() {
     const { error } = await updateProfile(user.id, { full_name: newName.trim() })
     setSaving(false)
     if (error) { showToast('Fehler: ' + error.message); return }
-    setLocalName(newName.trim())
     setShowName(false)
     showToast('Name geändert')
+    load()
+  }
+
+  async function handleSavePhone() {
+    setSaving(true)
+    const { error } = await updateProfile(user.id, { phone: newPhone.trim() || null })
+    setSaving(false)
+    if (error) { showToast('Fehler: ' + error.message); return }
+    setShowPhone(false)
+    showToast('Telefonnummer gespeichert')
+    load()
   }
 
   async function handleSavePassword() {
@@ -46,14 +66,14 @@ export default function TrainerProfile() {
     showToast('Passwort geändert ✓')
   }
 
-  const name = localName ?? profile?.full_name ?? '–'
+  const name = profile?.full_name || '–'
   const initials = getInitials(name)
 
   return (
     <div style={{ padding: '4px 16px 16px' }}>
       <p className="section-label">Mein Profil</p>
       <div className="card" style={{ cursor: 'default', marginBottom: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
           <div className="avatar" style={{ width: 48, height: 48, fontSize: 18 }}>{initials}</div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -63,12 +83,20 @@ export default function TrainerProfile() {
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{user?.email}</div>
           </div>
         </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <InfoRow label="E-Mail" value={user?.email} />
+          <InfoRow label="Telefon" value={profile?.phone || '–'} />
+        </div>
       </div>
 
       <p className="section-label">Einstellungen</p>
       <div className="card" style={{ cursor: 'default' }}>
-        <div className="ex-row" style={{ cursor: 'pointer' }} onClick={() => { setNewName(localName ?? profile?.full_name ?? ''); setShowName(true) }}>
-          <div className="ex-name">Name ändern</div>
+        <div className="ex-row" style={{ cursor: 'pointer' }} onClick={() => { setNewName(profile?.full_name || ''); setShowName(true) }}>
+          <div className="ex-name">Namen ändern</div>
+          <IconChevron />
+        </div>
+        <div className="ex-row" style={{ cursor: 'pointer' }} onClick={() => { setNewPhone(profile?.phone || ''); setShowPhone(true) }}>
+          <div className="ex-name">Telefonnummer ändern</div>
           <IconChevron />
         </div>
         <div className="ex-row" style={{ cursor: 'pointer' }} onClick={() => { setNewPw(''); setNewPw2(''); setPwErr(''); setShowPassword(true) }}>
@@ -80,7 +108,7 @@ export default function TrainerProfile() {
       <div className="divider" />
       <button className="btn btn-ghost btn-full" onClick={signOut}>Abmelden</button>
 
-      <Modal isOpen={showName} onClose={() => setShowName(false)} title="Name ändern">
+      <Modal isOpen={showName} onClose={() => setShowName(false)} title="Namen ändern">
         <div className="modal-field">
           <label>Dein Name</label>
           <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Vor- und Nachname" maxLength={60} autoFocus />
@@ -88,6 +116,17 @@ export default function TrainerProfile() {
         <div className="modal-actions">
           <button className="btn btn-ghost" onClick={() => setShowName(false)}>Abbrechen</button>
           <button className="btn btn-primary" disabled={saving} onClick={handleSaveName}>Speichern</button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={showPhone} onClose={() => setShowPhone(false)} title="Telefonnummer ändern">
+        <div className="modal-field">
+          <label>Telefonnummer</label>
+          <input type="tel" value={newPhone} onChange={e => setNewPhone(e.target.value)} placeholder="+49 123 456789" maxLength={30} autoFocus />
+        </div>
+        <div className="modal-actions">
+          <button className="btn btn-ghost" onClick={() => setShowPhone(false)}>Abbrechen</button>
+          <button className="btn btn-primary" disabled={saving} onClick={handleSavePhone}>Speichern</button>
         </div>
       </Modal>
 
@@ -108,6 +147,15 @@ export default function TrainerProfile() {
           </button>
         </div>
       </Modal>
+    </div>
+  )
+}
+
+function InfoRow({ label, value }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+      <span style={{ color: 'var(--text-muted)' }}>{label}</span>
+      <span style={{ color: 'var(--text)', fontWeight: 500 }}>{value}</span>
     </div>
   )
 }

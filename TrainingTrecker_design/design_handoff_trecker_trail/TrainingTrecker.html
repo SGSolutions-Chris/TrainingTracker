@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>TrainingTrecker — Reimagined</title>
+<template id="__bundler_thumbnail">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+    <rect width="200" height="200" fill="#0f5132"/>
+    <g transform="translate(60 70)" fill="none" stroke="#dcfce7" stroke-width="9" stroke-linecap="round">
+      <path d="M0 30h80M15 12v36M65 12v36M-8 22v16M88 22v16"/>
+    </g>
+    <text x="100" y="160" font-family="system-ui, sans-serif" font-size="20" font-weight="700" fill="#dcfce7" text-anchor="middle" letter-spacing="-0.5">Trecker</text>
+  </svg>
+</template>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
+    font-family: 'Plus Jakarta Sans', -apple-system, system-ui, sans-serif;
+    background: #f6f5f1; color: #1a1a1a; -webkit-font-smoothing: antialiased;
+  }
+  button { font-family: inherit; }
+  input, textarea { font-family: inherit; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  .phone-shell {
+    background: #ffffff; border-radius: 36px;
+    box-shadow: 0 0 0 8px #1a1a1a, 0 30px 80px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.08);
+    overflow: hidden; position: relative;
+  }
+  .phone-shell.dark { box-shadow: 0 0 0 8px #2a2a2a, 0 30px 80px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.12); }
+  .desktop-shell {
+    background: #ffffff; border-radius: 14px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.04), 0 30px 80px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.06);
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  .browser-chrome {
+    height: 38px; background: #f6f5f1; border-bottom: 1px solid rgba(0,0,0,0.08);
+    display: flex; align-items: center; gap: 8px; padding: 0 14px;
+  }
+  .browser-dot { width: 11px; height: 11px; border-radius: 50%; }
+  .browser-url {
+    height: 24px; background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 6px;
+    padding: 0 10px; display: flex; align-items: center;
+    font: 11px ui-monospace, 'JetBrains Mono', monospace; color: #6b6b6b;
+    margin-left: 8px; flex: 1; max-width: 380px;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="src/design-canvas.jsx"></script>
+<script type="text/babel" src="src/theme.jsx"></script>
+<script type="text/babel" src="src/data.jsx"></script>
+<script type="text/babel" src="src/ui.jsx"></script>
+<script type="text/babel" src="src/screens-main.jsx"></script>
+<script type="text/babel" src="src/screens-meta.jsx"></script>
+<script type="text/babel" src="src/app.jsx"></script>
+
+<script type="text/babel">
+const { useState } = React;
+
+const PHONE_W = 360;
+const PHONE_H = 760;
+
+// Phone artboard: clean rounded body, mounts an App.
+function PhoneArtboard({ variant, defaultMode = 'light', defaultRole = 'athlete', defaultRoute }) {
+  const [mode, setMode] = useState(defaultMode);
+  const [role, setRole] = useState(defaultRole);
+  const [route, setRoute] = useState(defaultRoute || { name: defaultRole === 'trainer' ? 'trainer' : 'home' });
+  const [resetKey, setResetKey] = useState(0);
+  const t = resolveTheme(variant, mode);
+
+  // The phone body. Use the App component directly with overridden initial state via key reset.
+  return (
+    <div style={{ width: PHONE_W + 60, paddingTop: 14 }}>
+      {/* Variant header strip — outside the phone */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 12px 14px', color: '#3a3a3a' }}>
+        <div>
+          <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em' }}>{t.name}</div>
+          <div style={{ fontSize: 11, color: '#8a8a85', fontFamily: 'JetBrains Mono, monospace' }}>{t.tagline}</div>
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <PhoneChip on={mode === 'dark'} onClick={() => setMode(m => m === 'dark' ? 'light' : 'dark')}
+            icon={mode === 'dark' ? 'sun' : 'moon'} label={mode === 'dark' ? 'Light' : 'Dark'}/>
+          <PhoneChip on={role === 'trainer'} onClick={() => {
+            const next = role === 'trainer' ? 'athlete' : 'trainer';
+            setRole(next);
+            setRoute({ name: next === 'trainer' ? 'trainer' : 'home' });
+            setResetKey(k => k + 1);
+          }} icon="user" label={role === 'trainer' ? 'As athlete' : 'As coach'}/>
+        </div>
+      </div>
+
+      <div className={'phone-shell' + (mode === 'dark' ? ' dark' : '')}
+        style={{ width: PHONE_W, height: PHONE_H, marginInline: 30 }}>
+        <App key={resetKey + '-' + variant} variant={variant} initialMode={mode}
+          initialRole={role} initialRoute={route}/>
+      </div>
+    </div>
+  );
+}
+
+function PhoneChip({ on, onClick, icon, label }) {
+  return (
+    <button onClick={onClick} style={{
+      ...btnReset, height: 30, paddingInline: 12, borderRadius: 999,
+      background: on ? '#0f5132' : '#ffffff', color: on ? '#fff' : '#3a3a3a',
+      border: '1px solid ' + (on ? '#0f5132' : 'rgba(0,0,0,0.08)'),
+      fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6,
+      cursor: 'pointer',
+    }}>
+      <Icon name={icon} size={12} stroke={2.2}/> {label}
+    </button>
+  );
+}
+
+// Desktop artboard
+function DesktopArtboard({ variant }) {
+  const [mode, setMode] = useState('light');
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 4px 14px', color: '#3a3a3a' }}>
+        <div>
+          <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em' }}>Desktop · Coach workspace</div>
+          <div style={{ fontSize: 11, color: '#8a8a85', fontFamily: 'JetBrains Mono, monospace' }}>Garden direction · responsive web</div>
+        </div>
+        <PhoneChip on={mode === 'dark'} onClick={() => setMode(m => m === 'dark' ? 'light' : 'dark')}
+          icon={mode === 'dark' ? 'sun' : 'moon'} label={mode === 'dark' ? 'Light' : 'Dark'}/>
+      </div>
+      <div className="desktop-shell" style={{ width: 1180, height: 760 }}>
+        <div className="browser-chrome">
+          <span className="browser-dot" style={{ background: '#ff5f57' }}/>
+          <span className="browser-dot" style={{ background: '#febc2e' }}/>
+          <span className="browser-dot" style={{ background: '#28c840' }}/>
+          <div className="browser-url">trecker.app/athletes/maya-chen</div>
+        </div>
+        <div style={{ height: 'calc(100% - 38px)' }}>
+          <DesktopTrainer variant={variant} mode={mode}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+function Root() {
+  return (
+    <DesignCanvas>
+      <DCSection id="phones" title="Mobile · 3 directions" subtitle="Each is a fully clickable prototype. Toggle light/dark and role per phone. Tap Today’s session → start workout → log a set.">
+        <DCArtboard id="garden" label="Garden · Apple Fitness soft" width={PHONE_W + 60} height={PHONE_H + 70}>
+          <PhoneArtboard variant="garden" defaultMode="light"/>
+        </DCArtboard>
+        <DCArtboard id="field" label="Field · Editorial data" width={PHONE_W + 60} height={PHONE_H + 70}>
+          <PhoneArtboard variant="field" defaultMode="light"/>
+        </DCArtboard>
+        <DCArtboard id="trail" label="Trail · Hero-led" width={PHONE_W + 60} height={PHONE_H + 70}>
+          <PhoneArtboard variant="trail" defaultMode="light"/>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="screens-tour" title="Screen tour · Garden" subtitle="Same direction shown across key screens for quick visual review.">
+        <DCArtboard id="g-login" label="Login" width={PHONE_W + 60} height={PHONE_H + 70}>
+          <PhoneArtboard variant="garden" defaultRoute={{ name: 'login' }}/>
+        </DCArtboard>
+        <DCArtboard id="g-workout" label="Active workout" width={PHONE_W + 60} height={PHONE_H + 70}>
+          <PhoneArtboard variant="garden" defaultRoute={{ name: 'workout', unitId: 'u3' }}/>
+        </DCArtboard>
+        <DCArtboard id="g-plan" label="Plan detail" width={PHONE_W + 60} height={PHONE_H + 70}>
+          <PhoneArtboard variant="garden" defaultRoute={{ name: 'plan', planId: 'p1' }}/>
+        </DCArtboard>
+        <DCArtboard id="g-weight" label="Body / weight" width={PHONE_W + 60} height={PHONE_H + 70}>
+          <PhoneArtboard variant="garden" defaultRoute={{ name: 'weight' }}/>
+        </DCArtboard>
+        <DCArtboard id="g-trainer" label="Coach roster" width={PHONE_W + 60} height={PHONE_H + 70}>
+          <PhoneArtboard variant="garden" defaultRole="trainer" defaultRoute={{ name: 'trainer' }}/>
+        </DCArtboard>
+        <DCArtboard id="g-athlete" label="Athlete profile" width={PHONE_W + 60} height={PHONE_H + 70}>
+          <PhoneArtboard variant="garden" defaultRole="trainer" defaultRoute={{ name: 'athlete', athleteId: 'a1' }}/>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="dark" title="Dark mode" subtitle="Each direction in dark. All three directions support both modes.">
+        <DCArtboard id="d-garden" label="Garden · Dark" width={PHONE_W + 60} height={PHONE_H + 70}>
+          <PhoneArtboard variant="garden" defaultMode="dark"/>
+        </DCArtboard>
+        <DCArtboard id="d-field" label="Field · Dark" width={PHONE_W + 60} height={PHONE_H + 70}>
+          <PhoneArtboard variant="field" defaultMode="dark"/>
+        </DCArtboard>
+        <DCArtboard id="d-trail" label="Trail · Dark" width={PHONE_W + 60} height={PHONE_H + 70}>
+          <PhoneArtboard variant="trail" defaultMode="dark"/>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="desktop" title="Coach workspace · Desktop" subtitle="Responsive web for the trainer side — broader plan overview, sortable roster.">
+        <DCArtboard id="dk-garden" label="Garden" width={1180} height={830}>
+          <DesktopArtboard variant="garden"/>
+        </DCArtboard>
+        <DCArtboard id="dk-field" label="Field" width={1180} height={830}>
+          <DesktopArtboard variant="field"/>
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Root/>);
+</script>
+</body>
+</html>

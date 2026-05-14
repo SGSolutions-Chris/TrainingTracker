@@ -75,7 +75,7 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      {/* ── Bottom Navigation ── */}
+      {/* ── Floating pill bottom nav ── */}
       <nav className={s.bottomNav}>
         {navTabs.map(({ to, label, icon: Icon }) => (
           <NavLink
@@ -83,7 +83,7 @@ export default function Layout() {
             to={to}
             className={({ isActive }) => `${s.navBtn} ${isActive ? s.navBtnActive : ''}`}
           >
-            <Icon />
+            <span className={s.navIcon}><Icon /></span>
             <span>{label}</span>
           </NavLink>
         ))}
@@ -95,7 +95,7 @@ export default function Layout() {
 /* ── SVG Icons ───────────────────────────────────── */
 function IconPlans() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
       <rect x="9" y="3" width="6" height="4" rx="1"/>
       <line x1="9" y1="12" x2="15" y2="12"/>
@@ -106,7 +106,7 @@ function IconPlans() {
 
 function IconLog() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10"/>
       <polyline points="12 6 12 12 16 14"/>
     </svg>
@@ -115,7 +115,7 @@ function IconLog() {
 
 function IconStats() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <line x1="18" y1="20" x2="18" y2="10"/>
       <line x1="12" y1="20" x2="12" y2="4"/>
       <line x1="6" y1="20" x2="6" y2="14"/>
@@ -125,7 +125,7 @@ function IconStats() {
 
 function IconProfile() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
       <circle cx="12" cy="7" r="4"/>
     </svg>

@@ -14,10 +14,10 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  height: 56px;
+  height: 52px;
   display: flex;
   align-items: center;
-  background: var(--bg-card);
+  background: var(--bg);
   border-bottom: 1px solid var(--border);
   padding: 0 4px;
 }
@@ -42,9 +42,10 @@
 
 .topbarTitle {
   text-align: center;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   color: var(--heading);
+  letter-spacing: -0.01em;
   line-height: 1.2;
   margin: 0;
   white-space: nowrap;
@@ -55,7 +56,7 @@
 
 .topbarSub {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--ink-muted);
   margin: 0;
   line-height: 1.2;
   white-space: nowrap;
@@ -65,27 +66,27 @@
 }
 
 .iconBtn {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent;
   border: none;
-  border-radius: 8px;
-  color: var(--text-muted);
+  border-radius: var(--r-sm);
+  color: var(--ink-muted);
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
 
 .iconBtn:hover {
-  background: var(--accent-dim);
+  background: var(--accent-soft);
   color: var(--accent);
 }
 
 .iconBtnPlaceholder {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
 }
 
 /* ── Scrollable content ───────────────────────────── */
@@ -93,20 +94,32 @@
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  /* space for bottom nav */
-  padding-bottom: 64px;
+  padding-bottom: 90px;
 }
 
-/* ── Bottom Navigation ────────────────────────────── */
+/* ── Floating pill bottom nav ─────────────────────── */
 .bottomNav {
-  position: sticky;
-  bottom: 0;
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 14px;
+  max-width: 448px;
+  margin: 0 auto;
+  /* center within the 480px layout */
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 448px;
+
+  height: 60px;
+  border-radius: var(--r-pill);
+  background: var(--hero);
+  border: 1px solid var(--hero-border);
+  box-shadow: var(--glow);
   z-index: 20;
-  height: 64px;
+
   display: flex;
-  align-items: stretch;
-  background: var(--bg-card);
-  border-top: 1px solid var(--border);
+  align-items: center;
 }
 
 .navBtn {
@@ -115,21 +128,43 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  color: var(--text-muted);
+  gap: 3px;
+  color: rgba(236,253,245,0.5);
   text-decoration: none;
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   transition: color 0.15s;
   border: none;
   background: transparent;
   cursor: pointer;
+  height: 100%;
+  border-radius: var(--r-pill);
+  position: relative;
+  padding: 0 4px;
 }
 
 .navBtn:hover {
-  color: var(--text);
+  color: var(--hero-ink);
 }
 
 .navBtnActive {
-  color: var(--accent);
+  color: #06120b;
+}
+
+.navBtnActive .navIcon {
+  background: var(--hero-accent);
+  color: #06120b;
+}
+
+.navIcon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.15s, color 0.15s;
+  color: inherit;
 }

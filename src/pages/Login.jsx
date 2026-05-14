@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import styles from '../styles/Login.module.css'
+import s from '../styles/Login.module.css'
 
 export default function Login() {
   const { signIn, signUp } = useAuth()
@@ -13,78 +13,86 @@ export default function Login() {
   const [error, setError] = useState(null)
   const [message, setMessage] = useState(null)
 
-  function reset() {
-    setError(null)
-    setMessage(null)
-  }
+  function reset() { setError(null); setMessage(null) }
 
   async function handleSubmit(e) {
     e.preventDefault()
     setLoading(true)
     reset()
-
     if (isSignUp) {
       const { error } = await signUp(email, password, role, fullName)
       if (error) setError(error.message)
-      else setMessage('Registrierung erfolgreich! Bitte bestätige deine E-Mail.')
+      else setMessage('Registrierung erfolgreich. Bitte bestätige deine E-Mail.')
     } else {
       const { error } = await signIn(email, password)
       if (error) setError(error.message)
     }
-
     setLoading(false)
   }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.card}>
-        <div className={styles.logo}>TT</div>
-        <h1 className={styles.title}>Training Tracker</h1>
-        <p className={styles.subtitle}>
-          {isSignUp ? 'Konto erstellen' : 'Willkommen zurück'}
-        </p>
+    <div className={s.page}>
+      {/* Dark hero panel */}
+      <div className={s.hero}>
+        <div className={s.glowBlob} />
+        <div className={s.logoRow}>
+          <div className={s.logoTile}>
+            <IconDumbbell />
+          </div>
+          <span className={s.wordmark}>Trecker</span>
+        </div>
+        <p className={s.tagline}>Train.</p>
+        <p className={s.tagline}>Log.</p>
+        <p className={s.tagline}>Repeat.</p>
+      </div>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
+      {/* Auth card — overlaps the hero boundary */}
+      <div className={s.card}>
+        <h2 className={s.cardTitle}>
+          {isSignUp ? 'Konto erstellen' : 'Willkommen zurück'}
+        </h2>
+
+        <form onSubmit={handleSubmit} className={s.form}>
           {isSignUp && (
             <input
-              className={styles.input}
+              className={s.input}
               type="text"
               placeholder="Name (optional)"
               value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
+              onChange={e => setFullName(e.target.value)}
             />
           )}
 
           <input
-            className={styles.input}
+            className={s.input}
             type="email"
             placeholder="E-Mail"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={e => setEmail(e.target.value)}
             required
           />
 
           <input
-            className={styles.input}
+            className={s.input}
             type="password"
             placeholder="Passwort"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
             required
           />
 
           {isSignUp && (
-            <div className={styles.roleRow}>
+            <div className={s.roleRow}>
               <button
                 type="button"
-                className={`${styles.roleBtn} ${role === 'athlete' ? styles.roleActive : ''}`}
+                className={`${s.roleBtn} ${role === 'athlete' ? s.roleActive : ''}`}
                 onClick={() => setRole('athlete')}
               >
                 Athlet
               </button>
               <button
                 type="button"
-                className={`${styles.roleBtn} ${role === 'trainer' ? styles.roleActive : ''}`}
+                className={`${s.roleBtn} ${role === 'trainer' ? s.roleActive : ''}`}
                 onClick={() => setRole('trainer')}
               >
                 Trainer
@@ -92,17 +100,17 @@ export default function Login() {
             </div>
           )}
 
-          {error && <p className={styles.error}>{error}</p>}
-          {message && <p className={styles.success}>{message}</p>}
+          {error && <p className={s.error}>{error}</p>}
+          {message && <p className={s.success}>{message}</p>}
 
-          <button type="submit" disabled={loading} className={styles.submit}>
+          <button type="submit" disabled={loading} className={s.submit}>
             {loading ? 'Laden...' : isSignUp ? 'Registrieren' : 'Anmelden'}
           </button>
         </form>
 
         <button
           type="button"
-          className={styles.toggle}
+          className={s.toggle}
           onClick={() => { setIsSignUp(!isSignUp); reset() }}
         >
           {isSignUp
@@ -111,5 +119,15 @@ export default function Login() {
         </button>
       </div>
     </div>
+  )
+}
+
+function IconDumbbell() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6.5 6.5h11M6.5 17.5h11"/>
+      <path d="M3 9.5h2v5H3zM19 9.5h2v5h-2z"/>
+      <rect x="5" y="8" width="14" height="8" rx="1"/>
+    </svg>
   )
 }

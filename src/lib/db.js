@@ -131,6 +131,17 @@ export const updateProfile = (userId, data) =>
 export const updatePassword = (password) =>
   supabase.auth.updateUser({ password })
 
+export const getAthleteTrainer = async (athleteId) => {
+  const { data, error } = await supabase
+    .from('trainer_athletes')
+    .select('trainer_id')
+    .eq('athlete_id', athleteId)
+    .limit(1)
+    .maybeSingle()
+  if (error || !data) return { data: null, error: error || null }
+  return supabase.from('profiles').select('full_name, email, phone').eq('id', data.trainer_id).maybeSingle()
+}
+
 // ── Trainer - Athletes ──────────────────────────────────────────
 export const getTrainerAthletes = async (trainerId) => {
   const { data: relations, error } = await supabase

@@ -5,7 +5,7 @@ import { usePageTitle } from '../../contexts/PageTitleContext'
 import { useToast } from '../../contexts/ToastContext'
 import {
   getAthleteSessions, getAthletePlansForTrainer, getTrainerOwnPlans, getAssignedPlans,
-  assignPlan, unassignPlan, removeAthlete, createPlanForAthlete,
+  assignPlan, unassignPlan, removeAthlete, createPlanForAthlete, getProfile,
 } from '../../lib/db'
 import { formatDate, formatDuration, getWeek, unitBadgeClass } from '../../lib/utils'
 import Modal from '../../components/Modal'
@@ -22,6 +22,7 @@ export default function AthleteDetail() {
 
   const [sessions, setSessions] = useState([])
   const [assignedPlans, setAssignedPlans] = useState([])
+  const [athleteProfile, setAthleteProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
   // Modals
@@ -40,12 +41,14 @@ export default function AthleteDetail() {
 
   async function load() {
     setLoading(true)
-    const [{ data: sess }, { data: plans }] = await Promise.all([
+    const [{ data: sess }, { data: plans }, { data: ap }] = await Promise.all([
       getAthleteSessions(athleteId, 5),
       getAthletePlansForTrainer(user.id, athleteId),
+      getProfile(athleteId),
     ])
     setSessions(sess || [])
     setAssignedPlans((plans || []).filter(p => p.assigned_to === athleteId))
+    setAthleteProfile(ap)
     setLoading(false)
   }
 
@@ -98,6 +101,14 @@ export default function AthleteDetail() {
 
   return (
     <div style={{ padding: '4px 16px 16px' }}>
+      <p className="section-label">Stammdaten</p>
+      <div className="card" style={{ cursor: 'default', marginBottom: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <InfoRow label="E-Mail" value={athleteProfile?.email || '–'} />
+          <InfoRow label="Telefon" value={athleteProfile?.phone || '–'} />
+        </div>
+      </div>
+
       <div className="stat-grid">
         <div className="stat-box">
           <div className="stat-val">{sessions.length}</div>
@@ -197,6 +208,15 @@ export default function AthleteDetail() {
           <button className="btn btn-danger" onClick={handleRemove}>Entfernen</button>
         </div>
       </Modal>
+    </div>
+  )
+}
+
+function InfoRow({ label, value }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+      <span style={{ color: 'var(--text-muted)' }}>{label}</span>
+      <span style={{ color: 'var(--text)', fontWeight: 500 }}>{value}</span>
     </div>
   )
 }
