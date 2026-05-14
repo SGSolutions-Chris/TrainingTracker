@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { usePageTitle } from '../../contexts/PageTitleContext'
+import { useTheme } from '../../contexts/ThemeContext'
 import { getProfile, updateProfile, updatePassword } from '../../lib/db'
 import { getInitials } from '../../lib/utils'
 import Modal from '../../components/Modal'
@@ -9,6 +10,7 @@ import { useToast } from '../../contexts/ToastContext'
 export default function TrainerProfile() {
   const { user, signOut } = useAuth()
   const { clearPageTitle } = usePageTitle()
+  const { mode, toggleMode } = useTheme()
   const showToast = useToast()
   const [profile, setProfile] = useState(null)
 
@@ -105,6 +107,14 @@ export default function TrainerProfile() {
         </div>
       </div>
 
+      <p className="section-label">Darstellung</p>
+      <div className="card" style={{ cursor: 'default' }}>
+        <div className="ex-row" style={{ borderBottom: 'none' }}>
+          <div className="ex-name">Dunkelmodus</div>
+          <ThemeSwitch on={mode === 'dark'} onToggle={toggleMode} />
+        </div>
+      </div>
+
       <div className="divider" />
       <button className="btn btn-ghost btn-full" onClick={signOut}>Abmelden</button>
 
@@ -157,6 +167,28 @@ function InfoRow({ label, value }) {
       <span style={{ color: 'var(--text-muted)' }}>{label}</span>
       <span style={{ color: 'var(--text)', fontWeight: 500 }}>{value}</span>
     </div>
+  )
+}
+
+function ThemeSwitch({ on, onToggle }) {
+  return (
+    <button
+      onClick={onToggle}
+      style={{
+        width: 44, height: 26, borderRadius: 999, border: 'none', cursor: 'pointer',
+        background: on ? 'var(--accent)' : 'var(--surface-alt)',
+        position: 'relative', flexShrink: 0,
+        transition: 'background 0.2s',
+        outline: 'none',
+      }}
+    >
+      <span style={{
+        position: 'absolute', top: 3, left: on ? 21 : 3,
+        width: 20, height: 20, borderRadius: '50%',
+        background: on ? 'var(--accent-ink)' : 'var(--ink-muted)',
+        transition: 'left 0.2s, background 0.2s',
+      }} />
+    </button>
   )
 }
 

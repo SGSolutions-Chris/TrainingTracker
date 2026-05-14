@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { PageTitleProvider } from './contexts/PageTitleContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 
@@ -75,13 +76,15 @@ function ProtectedRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <PageTitleProvider>
-          <ToastProvider>
-            <ProtectedRoutes />
-          </ToastProvider>
-        </PageTitleProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <PageTitleProvider>
+            <ToastProvider>
+              <ProtectedRoutes />
+            </ToastProvider>
+          </PageTitleProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   )
 }
