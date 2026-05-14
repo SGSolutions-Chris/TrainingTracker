@@ -1,0 +1,2114 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="./manifest.json">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏋️</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏋️</text></svg>">
+<title>Training Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f172a;
+  --bg2: #1e293b;
+  --bg3: #334155;
+  --accent: #22d3ee;
+  --accent2: #0891b2;
+  --text: #f1f5f9;
+  --text2: #94a3b8;
+  --text3: #64748b;
+  --border: rgba(148,163,184,0.12);
+  --border2: rgba(148,163,184,0.22);
+  --green: #4ade80;
+  --red: #f87171;
+  --amber: #fbbf24;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.5;overscroll-behavior:none}
+body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height:100vh;position:relative}
+
+/* Auth Screen */
+#auth-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:0}
+.auth-logo{font-size:36px;margin-bottom:8px}
+.auth-title{font-size:26px;font-weight:600;color:var(--text);margin-bottom:4px;letter-spacing:-0.5px}
+.auth-sub{font-size:13px;color:var(--text2);margin-bottom:36px;text-align:center}
+.auth-card{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;display:flex;flex-direction:column;gap:14px}
+.auth-tabs{display:flex;background:var(--bg3);border-radius:var(--radius-sm);padding:3px;margin-bottom:4px}
+.auth-tab{flex:1;padding:8px;text-align:center;font-size:13px;font-weight:500;border-radius:6px;cursor:pointer;color:var(--text2);transition:all 0.2s}
+.auth-tab.active{background:var(--bg2);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:12px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em}
+.field input{background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border 0.2s}
+.field input:focus{border-color:var(--accent)}
+.btn-primary{background:var(--accent);color:#0f172a;border:none;border-radius:var(--radius-sm);padding:13px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.15s;width:100%}
+.btn-primary:hover{background:#06b6d4}
+.btn-primary:active{transform:scale(0.98)}
+.btn-secondary{background:transparent;color:var(--text2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:11px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;transition:all 0.15s;width:100%}
+.btn-secondary:hover{border-color:var(--border);color:var(--text)}
+.btn-secondary:active{transform:scale(0.98)}
+.btn-danger{background:transparent;color:var(--red);border:1px solid rgba(248,113,113,0.3);border-radius:var(--radius-sm);padding:9px 14px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer}
+.btn-danger:hover{background:rgba(248,113,113,0.1)}
+.auth-err{font-size:13px;color:var(--red);text-align:center;min-height:18px}
+
+/* App */
+#app{flex:1;display:none;flex-direction:column;height:100vh}
+.topbar{background:var(--bg);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+.topbar-info{flex:1;min-width:0}
+.topbar-title{font-size:17px;font-weight:600;color:var(--text);letter-spacing:-0.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.icon-btn{background:none;border:none;cursor:pointer;color:var(--text2);padding:6px;display:flex;align-items:center;border-radius:var(--radius-sm);transition:all 0.15s;font-size:20px}
+.icon-btn:hover{background:var(--bg2);color:var(--text)}
+.content{flex:1;overflow-y:auto;padding:14px;padding-bottom:80px}
+.nav{display:flex;background:var(--bg);border-top:1px solid var(--border);padding:6px 0 max(10px, env(safe-area-inset-bottom));position:sticky;bottom:0;z-index:10}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:4px;color:var(--text3);font-size:10px;font-family:'DM Sans',sans-serif;transition:color 0.15s}
+.nav-item.active{color:var(--accent)}
+.nav-item svg{width:22px;height:22px}
+
+/* Cards */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color 0.15s}
+.card:hover{border-color:var(--border2)}
+.card:active{transform:scale(0.99)}
+.card-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card-title{font-size:15px;font-weight:600;color:var(--text)}
+.card-sub{font-size:12px;color:var(--text3);margin-top:3px}
+.section-label{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin:14px 0 8px;padding:0 2px}
+
+/* Badges */
+.badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;font-family:'DM Mono',monospace;display:inline-block}
+.bc0{background:rgba(34,211,238,0.15);color:#22d3ee}
+.bc1{background:rgba(74,222,128,0.15);color:#4ade80}
+.bc2{background:rgba(251,191,36,0.15);color:#fbbf24}
+.bc3{background:rgba(248,113,113,0.15);color:#f87171}
+.bc4{background:rgba(167,139,250,0.15);color:#a78bfa}
+.bc5{background:rgba(251,146,60,0.15);color:#fb923c}
+.bc6{background:rgba(52,211,153,0.15);color:#34d399}
+.bc7{background:rgba(248,113,161,0.15);color:#f872a1}
+
+/* FAB */
+.fab{position:fixed;bottom:calc(70px + env(safe-area-inset-bottom));right:16px;width:52px;height:52px;border-radius:50%;background:var(--accent);border:none;color:#0f172a;font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:20;transition:all 0.15s;box-shadow:0 4px 16px rgba(34,211,238,0.35)}
+.fab:active{transform:scale(0.95)}
+
+/* Exercise rows */
+.ex-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.ex-row:last-child{border-bottom:none}
+.ex-name{flex:1;font-size:14px;font-weight:500;color:var(--text)}
+.ex-detail{font-size:12px;color:var(--text3);margin-top:1px}
+
+/* Session */
+.session-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.session-ex-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:10px}
+.sets-table{width:100%;border-collapse:collapse}
+.sets-table th{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;padding:4px 6px;text-align:center}
+.sets-table th:first-child{text-align:left}
+.sets-table td{padding:5px 4px;text-align:center;vertical-align:middle}
+.set-num{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace}
+.mini-input{background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 6px;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;width:58px;text-align:center;outline:none}
+.mini-input:focus{border-color:var(--accent)}
+.check-btn{background:none;border:none;cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;transition:background 0.15s}
+.check-btn:hover{background:var(--bg3)}
+.check-btn.done svg{color:var(--green)}
+.check-btn:not(.done) svg{color:var(--text3)}
+
+/* Stats */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center}
+.stat-val{font-size:28px;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace}
+.stat-lbl{font-size:11px;color:var(--text3);margin-top:3px;text-transform:uppercase;letter-spacing:0.04em}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.modal{background:var(--bg2);border-radius:16px 16px 0 0;padding:20px 20px max(24px,env(safe-area-inset-bottom));width:100%;max-width:480px;max-height:85vh;overflow-y:auto;border-top:1px solid var(--border)}
+.modal-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.modal-field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.modal-field label{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em}
+.modal-field input,.modal-field select{background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none}
+.modal-field input:focus,.modal-field select:focus{border-color:var(--accent)}
+.modal-field select option{background:var(--bg2)}
+.modal-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-actions{display:flex;gap:10px;margin-top:6px}
+.modal-actions .btn-primary{flex:1}
+.modal-actions .btn-secondary{flex:1}
+
+/* Log entry */
+.log-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;cursor:pointer}
+.log-item:hover{border-color:var(--border2)}
+.log-meta{font-size:11px;color:var(--text3);margin-top:3px;font-family:'DM Mono',monospace}
+
+/* Empty state */
+.empty{text-align:center;padding:48px 20px;color:var(--text3)}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:0.5}
+.empty-title{font-size:16px;font-weight:500;color:var(--text2);margin-bottom:6px}
+.empty-sub{font-size:13px}
+
+/* Toast */
+.toast{position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--accent);color:#0f172a;padding:10px 22px;border-radius:24px;font-size:13px;font-weight:600;z-index:100;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.3s}
+.toast.show{opacity:1}
+
+/* Divider */
+.divider{border:none;border-top:1px solid var(--border);margin:12px 0}
+
+/* Loading */
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;gap:10px;color:var(--text3);font-size:13px}
+.spinner{width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Week header in log */
+.week-head{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;padding:10px 2px 4px}
+
+/* Trainer Dashboard */
+#trainer-app{flex:1;display:none;flex-direction:column;height:100vh}
+.trainer-nav{display:flex;background:var(--bg);border-top:1px solid var(--border);padding:6px 0 max(10px,env(safe-area-inset-bottom));position:sticky;bottom:0;z-index:10}
+.role-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:rgba(251,191,36,0.15);color:var(--amber);margin-left:8px;vertical-align:middle}
+.athlete-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color 0.15s}
+.athlete-card:hover{border-color:var(--border2)}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--accent);flex-shrink:0}
+.plan-assign-row{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)}
+.plan-assign-row:last-child{border-bottom:none}
+.trainer-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(251,191,36,0.12);color:var(--amber);margin-left:6px}
+.readonly-plan{opacity:0.7;pointer-events:none}
+
+/* Drag & Drop */
+.drag-handle{cursor:grab;color:var(--text3);padding:4px 8px;display:flex;align-items:center;touch-action:none;user-select:none;-webkit-user-select:none}
+.drag-handle:active{cursor:grabbing;color:var(--accent)}
+.sortable-item{transition:background 0.15s}
+.sortable-item.dragging{opacity:0.35;background:var(--bg3)!important;border-radius:var(--radius)}
+.sortable-item.drag-over-top{box-shadow:0 -2px 0 var(--accent)}
+.sortable-item.drag-over-bottom{box-shadow:0 2px 0 var(--accent)}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-logo">🏋️</div>
+  <div class="auth-title">Training Tracker</div>
+  <div class="auth-sub">Dein persönliches Trainingstagebuch</div>
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Anmelden</div>
+      <div class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Registrieren</div>
+    </div>
+    <div class="field">
+      <label>E-Mail</label>
+      <input type="email" id="auth-email" placeholder="deine@email.de" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Passwort</label>
+      <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div class="auth-err" id="auth-err"></div>
+    <button class="btn-primary" id="auth-btn" onclick="doAuth()">Anmelden</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-info">
+      <div class="topbar-title" id="topbar-title">Training Tracker</div>
+      <div class="topbar-sub" id="topbar-sub"></div>
+    </div>
+    <button class="icon-btn" id="back-btn" onclick="goBack()" style="display:none">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="22" height="22"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <button class="icon-btn" id="logout-btn" onclick="doLogout()" title="Abmelden">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"/></svg>
+    </button>
+  </div>
+
+  <div class="content" id="content"></div>
+
+  <nav class="nav">
+    <button class="nav-item active" id="nav-plans" onclick="setTab('plans')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Pläne
+    </button>
+    <button class="nav-item" id="nav-log" onclick="setTab('log')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Verlauf
+    </button>
+    <button class="nav-item" id="nav-stats" onclick="setTab('stats')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      Statistik
+    </button>
+    <button class="nav-item" id="nav-profile" onclick="setTab('profile')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      Profil
+    </button>
+  </nav>
+</div>
+
+<div id="modal-container"></div>
+<div class="toast" id="toast"></div>
+
+<!-- TRAINER APP -->
+<div id="trainer-app">
+  <div class="topbar">
+    <div class="topbar-info">
+      <div class="topbar-title" id="trainer-topbar-title">Trainer Dashboard</div>
+      <div class="topbar-sub" id="trainer-topbar-sub"></div>
+    </div>
+    <button class="icon-btn" id="trainer-back-btn" onclick="trainerGoBack()" style="display:none">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="22" height="22"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <button class="icon-btn" onclick="doLogout()" title="Abmelden">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"/></svg>
+    </button>
+  </div>
+  <div class="content" id="trainer-content"></div>
+  <nav class="nav trainer-nav">
+    <button class="nav-item active" id="tnav-athletes" onclick="setTrainerTab('athletes')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Athletes
+    </button>
+    <button class="nav-item" id="tnav-plans" onclick="setTrainerTab('plans')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Pl&auml;ne
+    </button>
+  </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SUPABASE_URL = 'https://sgrqyfhofhnqyqcfppdh.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_0SvgpvdAoQP_rIs8HmcKSA_NU9Pne2X';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentTab = 'plans';
+let viewStack = [];
+let sessionData = {};
+let currentUser = null;
+
+// --- AUTH ---
+function switchAuthTab(t) {
+  document.getElementById('tab-login').classList.toggle('active', t==='login');
+  document.getElementById('tab-signup').classList.toggle('active', t==='signup');
+  document.getElementById('auth-btn').textContent = t==='login' ? 'Anmelden' : 'Registrieren';
+  document.getElementById('auth-err').textContent = '';
+  document.getElementById('auth-btn').onclick = () => doAuth(t);
+}
+
+async function doAuth(mode='login') {
+  const email = document.getElementById('auth-email').value.trim();
+  const pw = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-err');
+  errEl.textContent = '';
+  if(!email||!pw){errEl.textContent='Bitte E-Mail und Passwort eingeben.';return;}
+  const btn = document.getElementById('auth-btn');
+  btn.textContent = '...'; btn.disabled = true;
+  try {
+    let res;
+    if(mode==='login') res = await sb.auth.signInWithPassword({email,password:pw});
+    else res = await sb.auth.signUp({email,password:pw});
+    if(res.error) throw res.error;
+    if(mode==='signup' && !res.data.session) {
+      errEl.style.color='var(--green)';
+      errEl.textContent='Best\u00e4tigungsmail verschickt \u2013 bitte pr\u00fcfe dein Postfach.';
+    } else if(res.data.session) {
+      currentUser = res.data.session.user;
+      const role=await loadUserRole();
+      if(role==='trainer'){
+        showTrainerApp();
+      } else {
+        document.getElementById('auth-screen').style.display='none';
+        document.getElementById('app').style.display='flex';
+        viewStack=[];
+        setTab('plans');
+      }
+    }
+  } catch(e) {
+    errEl.style.color='var(--red)';
+    errEl.textContent = e.message||'Fehler beim Anmelden.';
+  } finally {
+    btn.textContent = mode==='login'?'Anmelden':'Registrieren';
+    btn.disabled = false;
+  }
+}
+
+async function doLogout() {
+  await sb.auth.signOut({scope:'local'});
+  currentUser = null;
+  sessionStorage.removeItem('tt_nav');
+  sessionStorage.removeItem('tt_session');
+  viewStack = [];
+  sessionData = {};
+  document.getElementById('app').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('auth-email').value='';
+  document.getElementById('auth-password').value='';
+  document.getElementById('auth-err').textContent='';
+}
+
+sb.auth.onAuthStateChange((event, session) => {
+  if(event === 'SIGNED_OUT') {
+    currentUser = null;
+    document.getElementById('auth-screen').style.display='flex';
+    document.getElementById('app').style.display='none';
+    sessionStorage.removeItem('tt_nav');
+    sessionStorage.removeItem('tt_session');
+  } else if(session?.user) {
+    currentUser = session.user;
+  }
+});
+
+// --- NAV ---
+function setTab(t) {
+  currentTab=t; viewStack=[]; sessionData={};
+  ['plans','log','stats','profile'].forEach(x=>{
+    const el=document.getElementById('nav-'+x);
+    if(el) el.classList.toggle('active',x===t);
+  });
+  document.getElementById('back-btn').style.display='none';
+  document.getElementById('logout-btn').style.display='';
+  document.getElementById('topbar-title').textContent='Training Tracker';
+  document.getElementById('topbar-sub').textContent='';
+  saveNavState();
+  render();
+}
+
+function pushView(v) {
+  viewStack.push(v);
+  document.getElementById('back-btn').style.display='';
+  document.getElementById('logout-btn').style.display='none';
+  // History-Eintrag für Android Back-Button
+  history.pushState({view:true},'','');
+  saveNavState();
+  render();
+}
+
+function goBack() {
+  const v=currentView();
+  if(v&&v.type==='session'){
+    showAbortWorkoutModal();
+    return;
+  }
+  if(v) stopTimer();
+  viewStack.pop();
+  if(!viewStack.length) {
+    document.getElementById('back-btn').style.display='none';
+    document.getElementById('logout-btn').style.display='';
+    document.getElementById('topbar-title').textContent='Training Tracker';
+    document.getElementById('topbar-sub').textContent='';
+  }
+  sessionData={};
+  saveNavState();
+  render();
+}
+
+// Android Back-Button abfangen
+window.addEventListener('popstate', (e)=>{
+  const v=currentView();
+  if(v&&v.type==='session'){
+    // History-Eintrag wieder hinzufügen damit wir in der App bleiben
+    history.pushState({view:true},'','');
+    showAbortWorkoutModal();
+  } else if(v){
+    goBack();
+  }
+});
+
+function currentView(){return viewStack[viewStack.length-1]||null;}
+
+// --- RENDER ---
+async function render() {
+  const c=document.getElementById('content');
+  c.innerHTML=`<div class="loading"><div class="spinner"></div> Laden...</div>`;
+  const v=currentView();
+  try {
+    if(v) {
+      if(v.type==='plan') await renderPlanDetail(v,c);
+      else if(v.type==='unit') await renderUnitDetail(v,c);
+      else if(v.type==='session') await renderSession(v,c);
+      else if(v.type==='logEntry') await renderLogEntry(v,c);
+    } else if(currentTab==='plans') await renderPlans(c);
+    else if(currentTab==='log') await renderLog(c);
+    else if(currentTab==='profile') await renderProfile(c);
+    else await renderStats(c);
+  } catch(e) {
+    c.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Fehler</div><div class="empty-sub">${e.message}</div></div>`;
+  }
+}
+
+// --- PLANS ---
+async function renderPlans(c) {
+  const {data:plans,error} = await sb.from('plans').select('*,units(*)').or(`user_id.eq.${currentUser.id},assigned_to.eq.${currentUser.id}`).order('created_at');
+  if(error) throw error;
+  let h=`<div class="section-label">Meine Pl\u00e4ne</div>`;
+  if(!plans||!plans.length) {
+    h+=`<div class="empty"><div class="empty-icon">&#x1F4CB;</div><div class="empty-title">Noch keine Pl\u00e4ne</div><div class="empty-sub">Erstelle deinen ersten Trainingsplan</div></div>`;
+  } else {
+    plans.forEach(p=>{
+      const uc = p.units?.length||0;
+      const isTrainer=p.created_by && p.created_by!==currentUser.id;
+      h+=`<div class="card" onclick="openPlan('${p.id}','${esc(p.name)}',${isTrainer})">
+        <div class="card-row">
+          <div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <div class="card-title">${esc(p.name)}</div>
+              ${isTrainer?`<span class="trainer-badge"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="10" height="10"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg> Trainer</span>`:''}
+            </div>
+            <div class="card-sub">${uc} Einheit${uc!==1?'en':''}</div>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" style="color:var(--text3);flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </div>
+      </div>`;
+    });
+  }
+  h+=`<button class="btn-secondary" style="width:100%;justify-content:center;margin-top:6px" onclick="showNewPlanModal()">+ Neuen Trainingsplan anlegen</button>`;
+  c.innerHTML=h;
+  c.insertAdjacentHTML('beforeend',`<button class="fab" onclick="showQuickStartModal()" title="Workout starten">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="26" height="26"><path d="M8 5v14l11-7z"/></svg>
+  </button>`);
+}
+
+async function showQuickStartModal(){
+  const {data:plans} = await sb.from('plans').select('*,units(*)').order('created_at');
+  if(!plans||!plans.length){showToast('Keine Pl\u00e4ne vorhanden');return;}
+  let opts='';
+  plans.forEach((p,pi)=>{
+    (p.units||[]).forEach((u,ui)=>{
+      const bc='bc'+(ui%8);
+      opts+=`<div class="card" style="margin-bottom:8px" onclick="quickStart('${p.id}','${esc(p.name)}','${u.id}','${esc(u.letter)}')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="badge ${bc}">${esc(u.letter)}</span>
+          <div><div style="font-size:14px;font-weight:500;color:var(--text)">${esc(u.name||'Einheit '+u.letter)}</div>
+          <div style="font-size:12px;color:var(--text3)">${esc(p.name)}</div></div>
+        </div>
+      </div>`;
+    });
+  });
+  if(!opts) opts=`<div class="empty" style="padding:16px"><div class="empty-title">Keine Einheiten vorhanden</div></div>`;
+  modal(`<div class="modal-title">Welche Einheit? <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>${opts}`);
+}
+
+function quickStart(planId,planName,unitId,letter){
+  closeModal();
+  document.getElementById('topbar-title').textContent='Training \u00b7 '+letter;
+  document.getElementById('topbar-sub').textContent=planName;
+  sessionData={};
+  pushView({type:'session',planId,planName,unitId,letter});
+}
+
+function openPlan(id,name,isTrainerPlan=false) {
+  document.getElementById('topbar-title').textContent=name;
+  document.getElementById('topbar-sub').textContent='Einheiten';
+  pushView({type:'plan',planId:id,planName:name,isTrainerPlan});
+}
+
+async function renderPlanDetail(v,c) {
+  const {data:units,error} = await sb.from('units').select('*,exercises(count)').eq('plan_id',v.planId).order('sort_order');
+  if(error) throw error;
+  let h=`<div class="section-label">Einheiten</div>`;
+  if(!units||!units.length){
+    h+=`<div class="empty" style="padding:24px"><div class="empty-icon">&#128203;</div><div class="empty-title">Noch keine Einheiten</div><div class="empty-sub">F&uuml;ge deine erste Einheit hinzu</div></div>`;
+  } else {
+    units.forEach((u,i)=>{
+      const ec=u.exercises?.[0]?.count||0;
+      const bc='bc'+(i%8);
+      h+=`<div class="card sortable-item" data-id="${u.id}" data-type="unit">
+        <div class="card-row">
+          <div class="drag-handle" onmousedown="dragStart(event)" ontouchstart="dragStart(event)">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+          </div>
+          <div onclick="openUnit('${u.id}','${esc(u.letter)}','${esc(u.name||'')}','${v.planId}','${esc(v.planName)}')" style="flex:1;display:flex;align-items:center;gap:10px">
+            <span class="badge ${bc}">${esc(u.letter)}</span>
+            <div><div class="card-title">${esc(u.name||'Einheit '+u.letter)}</div><div class="card-sub">${ec} &Uuml;bung${ec!==1?'en':''}</div></div>
+          </div>
+          <button class="btn-primary" style="padding:7px 14px;font-size:13px;border-radius:8px;white-space:nowrap;margin-right:6px" onclick="startSession('${v.planId}','${esc(v.planName)}','${u.id}','${esc(u.letter)}')">&#9654;</button>
+          <button class="icon-btn" style="color:var(--red)" onclick="confirmDeleteUnit('${u.id}','${esc(u.letter)}','${esc(u.name||'')}')">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="17" height="17"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        </div>
+      </div>`;
+    });
+  }
+  h+=`<button class="btn-secondary" style="margin-bottom:10px" onclick="showAddUnitModal('${v.planId}')">+ Einheit hinzuf&uuml;gen</button>`;
+  h+=`<hr class="divider"><button class="btn-danger" onclick="confirmDeletePlan('${v.planId}','${esc(v.planName)}')">Plan l&ouml;schen</button>`;
+  if(v.isTrainerPlan){
+    // Replace content with readonly version
+    c.innerHTML=c.innerHTML;
+  }
+  c.innerHTML=h;
+}
+
+function openUnit(unitId,letter,name,planId,planName) {
+  document.getElementById('topbar-title').textContent='Einheit '+letter+(name?' – '+name:'');
+  document.getElementById('topbar-sub').textContent=planName;
+  pushView({type:'unit',unitId,letter,unitName:name,planId,planName});
+}
+
+async function renderUnitDetail(v,c) {
+  const {data:exs,error} = await sb.from('exercises').select('*').eq('unit_id',v.unitId).order('sort_order');
+  if(error) throw error;
+  let h=`<div class="section-label">Übungen</div>`;
+  if(!exs||!exs.length) {
+    h+=`<div class="empty" style="padding:24px"><div class="empty-icon">🏋</div><div class="empty-title">Noch keine Übungen</div></div>`;
+  } else {
+    h+=`<div class="card" style="cursor:default">`;
+    window._exCache={};
+    exs.forEach(ex=>{
+      window._exCache[ex.id]=ex;
+      const kgInfo=ex.target_kg_per_side?` &middot; Ziel: ${ex.target_kg_per_side} kg/S`:(ex.target_kg_total?` &middot; Ziel: ${ex.target_kg_total} kg`:'');
+      const equipLabel={'dumbbell':'Kurzhantel','barbell':'Langhantel','bodyweight':'K\u00f6rpergewicht'}[ex.equipment_type||'dumbbell'];
+      h+=`<div class="ex-row sortable-item" data-id="${ex.id}" data-type="exercise">
+        <div class="drag-handle" onmousedown="dragStart(event)" ontouchstart="dragStart(event)">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+        </div>
+        <div style="flex:1"><div class="ex-name">${esc(ex.name)}</div><div class="ex-detail">${ex.sets} S&auml;tze &middot; ${repsLabel(ex.target_reps,ex.target_reps_unit)} &middot; ${equipLabel}${kgInfo}</div></div>
+        <button class="icon-btn" onclick="showEditExerciseModal('${ex.id}')" style="margin-right:2px">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="17" height="17"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        </button>
+        <button class="icon-btn" style="color:var(--red)" onclick="confirmDeleteExercise('${ex.id}','${esc(ex.name)}')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="17" height="17"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      </div>`;
+    });
+    h+=`</div>`;
+  }
+  h+=`<button class="btn-secondary" style="margin-top:8px" onclick="showAddExerciseModal('${v.unitId}')">+ Übung hinzufügen</button>`;
+  c.innerHTML=h;
+}
+
+// --- SESSION ---
+let sessionTimer=null;
+let sessionStartTime=null;
+let currentExIndex=0;
+
+function startSession(planId,planName,unitId,letter) {
+  document.getElementById('topbar-title').textContent='Training \u00b7 '+letter;
+  document.getElementById('topbar-sub').textContent=planName;
+  sessionData={};
+  currentExIndex=0;
+  startTimer();
+  saveSessionData();
+  pushView({type:'session',planId,planName,unitId,letter});
+}
+
+function startTimer(){
+  sessionStartTime=Date.now();
+  if(sessionTimer) clearInterval(sessionTimer);
+  sessionTimer=setInterval(()=>{
+    const el=document.getElementById('session-timer');
+    if(el) el.textContent=formatDuration(Math.floor((Date.now()-sessionStartTime)/1000));
+  },1000);
+}
+
+function stopTimer(){
+  if(sessionTimer){clearInterval(sessionTimer);sessionTimer=null;}
+  return sessionStartTime?Math.floor((Date.now()-sessionStartTime)/1000):0;
+}
+
+function formatDuration(secs){
+  const h=Math.floor(secs/3600);
+  const m=Math.floor((secs%3600)/60);
+  const s=secs%60;
+  if(h>0) return h+'h '+m+'min '+s+'sek';
+  if(m>0) return m+'min '+s+'sek';
+  return s+'sek';
+}
+
+async function renderSession(v,c) {
+  const {data:exs,error} = await sb.from('exercises').select('*').eq('unit_id',v.unitId).order('sort_order');
+  if(error) throw error;
+  if(!exs||!exs.length){c.innerHTML=`<div class="empty"><div class="empty-title">Keine \u00dcbungen</div></div>`;return;}
+
+  if(currentExIndex>=exs.length) currentExIndex=exs.length-1;
+  if(currentExIndex<0) currentExIndex=0;
+  const ei=currentExIndex;
+  const ex=exs[ei];
+  const isLast=ei===exs.length-1;
+
+  const equip=ex.equipment_type||'dumbbell';
+  const isBody=equip==='bodyweight';
+  const isBarbell=equip==='barbell';
+  const tKg=sessionData['kg_'+ei]!==undefined?sessionData['kg_'+ei]:(isBarbell?(ex.target_kg_total||''):(ex.target_kg_per_side||''));
+  const tKgTot=sessionData['kgtot_'+ei]!==undefined?sessionData['kgtot_'+ei]:(ex.target_kg_total||'');
+  const equipLabel={'dumbbell':'Kurzhantel / Kabelzug','barbell':'Langhantel / Maschine','bodyweight':'K\u00f6rpergewicht'}[equip]||equip;
+
+  let kgBlock='';
+  if(isBody){
+    kgBlock=`<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(34,211,238,0.08);border:1px solid rgba(34,211,238,0.2);border-radius:8px;padding:7px 12px;margin-bottom:10px;font-size:13px;color:var(--accent)">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      K\u00f6rpergewicht
+    </div>`;
+  } else if(isBarbell){
+      kgBlock=`<div style="display:flex;gap:10px;margin-bottom:10px">
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em">KG gesamt <span style="color:var(--accent);font-size:10px">${ex.target_kg_total?'Ziel: '+ex.target_kg_total:''}</span></div>
+          <input class="mini-input" style="width:100%" type="number" step="0.5" id="kg_${ei}" value="${tKg}" placeholder="${ex.target_kg_total||'0'}" oninput="calcTotal(${ei},'barbell')">
+        </div>
+      </div>`;
+    } else {
+      kgBlock=`<div style="display:flex;gap:10px;margin-bottom:10px">
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em">KG/Seite <span style="color:var(--accent);font-size:10px">${ex.target_kg_per_side?'Ziel: '+ex.target_kg_per_side:''}</span></div>
+          <input class="mini-input" style="width:100%" type="number" step="0.5" id="kg_${ei}" value="${tKg}" placeholder="${ex.target_kg_per_side||'0'}" oninput="calcTotal(${ei},'dumbbell')">
+        </div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em">KG gesamt <span style="color:var(--accent);font-size:10px">${ex.target_kg_total?'Ziel: '+ex.target_kg_total:''}</span></div>
+          <input class="mini-input" style="width:100%;color:var(--text3)" type="number" step="0.5" id="kgtot_${ei}" value="${tKgTot}" placeholder="${ex.target_kg_total||'0'}" readonly>
+        </div>
+      </div>`;
+    }
+
+  let setsHtml='';
+  for(let s=0;s<ex.sets;s++){
+    const done=sessionData[`done_${ei}_${s}`];
+    setsHtml+=`<tr>
+      <td><span class="set-num">${s+1}</span></td>
+      <td><span style="font-family:'DM Mono';font-size:13px;color:var(--text3)">${repsLabel(ex.target_reps,ex.target_reps_unit)}</span></td>
+      <td><input class="mini-input" type="number" id="ist_${ei}_${s}" value="${sessionData['ist_'+ei+'_'+s]||''}" placeholder="\u2013" onchange="saveIst(${ei},${s},this.value)"></td>
+      <td><button class="check-btn ${done?'done':''}" onclick="toggleDone(${ei},${s})">
+        ${done
+          ?`<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="22" height="22"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
+          :`<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="22" height="22"><circle cx="12" cy="12" r="9" stroke-width="2"/></svg>`}
+      </button></td>
+    </tr>`;
+  }
+
+  c.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:12px;color:var(--text3)">\u00dcbung ${ei+1} von ${exs.length}</div>
+      <div id="session-timer" style="font-family:'DM Mono';font-size:13px;color:var(--accent);background:rgba(34,211,238,0.1);padding:3px 10px;border-radius:20px">${formatDuration(sessionStartTime?Math.floor((Date.now()-sessionStartTime)/1000):0)}</div>
+    </div>
+    <div class="session-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div>
+          <div class="session-ex-title" style="margin-bottom:0">${esc(ex.name)}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${equipLabel}</div>
+        </div>
+        ${!isBody?`<button class="icon-btn" style="font-size:13px;color:var(--accent);gap:3px;padding:4px 8px;border:1px solid rgba(34,211,238,0.3);border-radius:6px" onclick="showUpdateTargetKgModal('${ex.id}',${ei},'${equip}')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          Ziel-KG
+        </button>`:''}
+      </div>
+      ${kgBlock}
+      <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
+        ${ex.target_reps===0?'':`<button class="icon-btn" style="font-size:12px;color:var(--accent);padding:3px 8px;border:1px solid rgba(34,211,238,0.3);border-radius:6px;gap:4px" onclick="copyTargetReps(${ei},${ex.sets},${ex.target_reps})">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          Ziel-Wdh. \u00fcbernehmen
+        </button>`}
+      </div>
+      <table class="sets-table">
+        <thead><tr><th>Satz</th><th>Ziel Wdh.</th><th>Ist Wdh.</th><th></th></tr></thead>
+        <tbody>${setsHtml}</tbody>
+      </table>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      ${ei>0?`<button class="btn-secondary" style="flex:1" onclick="navEx(-1)">&#8592; Zur\u00fcck</button>`:`<div style="flex:1"></div>`}
+      ${isLast
+        ?`<button class="btn-primary" style="flex:1" onclick="finishSession('${v.planId}','${esc(v.planName)}','${v.unitId}','${v.letter}')">Training beenden</button>`
+        :`<button class="btn-primary" style="flex:1" onclick="navEx(1)">Weiter &#8594;</button>`}
+    </div>`;
+}
+
+function navEx(dir){
+  const v=currentView();
+  if(!v) return;
+  // Aktuelle Eingaben sichern
+  const kgEl=document.getElementById('kg_'+currentExIndex);
+  if(kgEl) sessionData['kg_'+currentExIndex]=kgEl.value;
+  const totEl=document.getElementById('kgtot_'+currentExIndex);
+  if(totEl) sessionData['kgtot_'+currentExIndex]=totEl.value;
+  saveSessionData();
+  currentExIndex+=dir;
+  renderSession(v,document.getElementById('content'));
+}
+
+function copyTargetReps(ei,sets,targetReps){
+  for(let s=0;s<sets;s++){
+    sessionData['ist_'+ei+'_'+s]=String(targetReps);
+    const el=document.getElementById('ist_'+ei+'_'+s);
+    if(el) el.value=targetReps;
+  }
+  saveSessionData();
+  showToast('Ziel-Wdh. \u00fcbernommen');
+}
+
+function calcTotal(ei,equip){
+  const kg=parseFloat(document.getElementById('kg_'+ei)?.value)||0;
+  const tot=document.getElementById('kgtot_'+ei);
+  if(tot&&equip==='dumbbell') tot.value=kg>0?(kg*2).toFixed(1).replace(/\.0$/,''):'';
+  const v=currentView();
+  if(v){
+    sessionData['kg_'+ei]=document.getElementById('kg_'+ei)?.value||'';
+    if(tot) sessionData['kgtot_'+ei]=tot.value;
+    else sessionData['kgtot_'+ei]=String(kg||'');
+    saveSessionData();
+  }
+}
+
+function saveIst(ei,si,val){
+  const v=currentView();
+  if(v){sessionData['ist_'+ei+'_'+si]=val;saveSessionData();}
+}
+
+function toggleDone(ei,si){
+  const istEl=document.getElementById('ist_'+ei+'_'+si);
+  if(istEl) sessionData['ist_'+ei+'_'+si]=istEl.value;
+  const kgEl=document.getElementById('kg_'+ei);
+  if(kgEl){sessionData['kg_'+ei]=kgEl.value;const t=document.getElementById('kgtot_'+ei);if(t)sessionData['kgtot_'+ei]=t.value;}
+  sessionData['done_'+ei+'_'+si]=!sessionData['done_'+ei+'_'+si];
+  saveSessionData();
+  const v=currentView();
+  if(v) renderSession(v,document.getElementById('content'));
+}
+
+async function finishSession(planId,planName,unitId,letter){
+  // Prüfen ob mindestens ein Satz ausgefüllt wurde
+  const hasData=Object.keys(sessionData).some(k=>
+    (k.startsWith('ist_')||k.startsWith('done_'))&&sessionData[k]
+  );
+  if(!hasData){
+    modal(`<div class="modal-title">Keine Daten <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+      <div style="font-size:14px;color:var(--text2);margin-bottom:16px">Du hast noch keine Wdh. oder S\u00e4tze eingetragen. M\u00f6chtest du das Training trotzdem beenden?</div>
+      <div class="modal-actions">
+        <button class="btn-secondary" style="flex:1" onclick="closeModal()">Weiter trainieren</button>
+        <button class="btn-danger" style="flex:1" onclick="closeModal();doFinishSession('${planId}','${esc(planName)}','${unitId}','${letter}')">Trotzdem beenden</button>
+      </div>`);
+    return;
+  }
+  await doFinishSession(planId,planName,unitId,letter);
+}
+
+async function doFinishSession(planId,planName,unitId,letter){
+  const duration=stopTimer();
+  const {data:exs} = await sb.from('exercises').select('*').eq('unit_id',unitId).order('sort_order');
+  const now=new Date();
+  const week=getWeek(now);
+  const {data:sess,error:se} = await sb.from('sessions').insert({
+    user_id:currentUser.id,plan_id:planId,unit_id:unitId,
+    letter,plan_name:planName,
+    trained_at:now.toISOString().slice(0,10),week_number:week,
+    duration_seconds:duration
+  }).select().single();
+  if(se) {showToast('Fehler beim Speichern');return;}
+  const sets=[];
+  (exs||[]).forEach((ex,ei)=>{
+    for(let s=0;s<ex.sets;s++){
+      sets.push({
+        session_id:sess.id,exercise_name:ex.name,set_number:s+1,
+        kg_per_side:parseFloat(sessionData['kg_'+ei])||null,
+        kg_total:parseFloat(sessionData['kgtot_'+ei])||null,
+        target_reps:ex.target_reps,
+        target_reps_unit:ex.target_reps_unit||'reps',
+        actual_reps:parseInt(sessionData['ist_'+ei+'_'+s])||null,
+        done:!!sessionData['done_'+ei+'_'+s]
+      });
+    }
+  });
+  if(sets.length) await sb.from('session_sets').insert(sets);
+  sessionData={};
+  currentExIndex=0;
+  sessionStorage.removeItem('tt_session');
+  goBack();goBack();
+  showToast('Training gespeichert \ud83d\udcaa '+formatDuration(duration));
+}
+// --- LOG ---
+async function renderLog(c) {
+  const {data:sessions,error} = await sb.from('sessions').select('*').eq('user_id',currentUser.id).order('trained_at',{ascending:false}).limit(100);
+  if(error) throw error;
+  if(!sessions||!sessions.length){
+    c.innerHTML=`<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">Noch kein Training</div><div class="empty-sub">Starte deine erste Einheit</div></div>`;return;
+  }
+  let h='<div class="section-label">Trainingsprotokoll</div>';
+  let lastWeek='';
+  sessions.forEach(s=>{
+    const wk='KW '+s.week_number+' \u00b7 '+s.trained_at.slice(0,4);
+    if(wk!==lastWeek){h+=`<div class="week-head">${wk}</div>`;lastWeek=wk;}
+    const dur=s.duration_seconds?` \u00b7 ${formatDuration(s.duration_seconds)}`:'';
+    const bc='bc'+(['A','B','C','D','E','F','G','H'].indexOf(s.letter)%8||0);
+    h+=`<div class="log-item" onclick="openLogEntry('${s.id}','${s.trained_at}','${esc(s.letter)}','${esc(s.plan_name)}')">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="badge ${bc}">${esc(s.letter)}</span>
+        <span style="font-size:14px;font-weight:500">${esc(s.plan_name)}</span>
+      </div>
+      <div class="log-meta">${formatDate(s.trained_at)}${dur}</div>
+    </div>`;
+  });
+  c.innerHTML=h;
+}
+
+function openLogEntry(id,date,letter,planName) {
+  document.getElementById('topbar-title').textContent=date+' · '+letter;
+  document.getElementById('topbar-sub').textContent=planName;
+  pushView({type:'logEntry',sessionId:id});
+}
+
+async function renderLogEntry(v,c) {
+  const [{data:sess},{data:sets,error}] = await Promise.all([
+    sb.from('sessions').select('duration_seconds').eq('id',v.sessionId).single(),
+    sb.from('session_sets').select('*').eq('session_id',v.sessionId).order('set_number')
+  ]);
+  if(error) throw error;
+  const byEx={};
+  (sets||[]).forEach(s=>{
+    if(!byEx[s.exercise_name]) byEx[s.exercise_name]=[];
+    byEx[s.exercise_name].push(s);
+  });
+  let h='';
+  if(sess?.duration_seconds){
+    h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" style="color:var(--accent);flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span style="font-size:14px;color:var(--text)">Trainingsdauer: <strong>${formatDuration(sess.duration_seconds)}</strong></span>
+    </div>`;
+  }
+  Object.entries(byEx).forEach(([name,exSets])=>{
+    h+=`<div class="session-card" style="cursor:default">
+      <div class="session-ex-title">${esc(name)}</div>
+      <table class="sets-table">
+        <thead><tr><th>Satz</th><th>KG/S</th><th>KG ges.</th><th>Ziel</th><th>Ist</th><th>✓</th></tr></thead>
+        <tbody>`;
+    exSets.forEach(s=>{
+      h+=`<tr>
+        <td><span class="set-num">${s.set_number}</span></td>
+        <td style="font-family:'DM Mono';font-size:13px">${s.kg_per_side??'–'}</td>
+        <td style="font-family:'DM Mono';font-size:13px">${s.kg_total??'–'}</td>
+        <td style="font-family:'DM Mono';font-size:13px;color:var(--text3)">${s.target_reps??'–'}</td>
+        <td style="font-family:'DM Mono';font-size:13px;color:var(--accent)">${s.actual_reps??'–'}</td>
+        <td style="font-size:16px">${s.done?'✅':'○'}</td>
+      </tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  });
+  if(!h) h=`<div class="empty"><div class="empty-title">Keine Daten</div></div>`;
+  c.innerHTML=h;
+}
+
+// --- STATS ---
+async function renderStats(c) {
+  const uid=currentUser.id;
+  const [sessRes,setsRes] = await Promise.all([
+    sb.from('sessions').select('*').eq('user_id',uid),
+    sb.from('session_sets').select('*, sessions!inner(user_id)').eq('sessions.user_id',uid)
+  ]);
+  const sessions=sessRes.data||[];
+  const allSets=setsRes.data||[];
+  const total=sessions.length;
+  const week=getWeek(new Date());
+  const thisWeek=sessions.filter(s=>s.week_number===week).length;
+  const unitCounts={};
+  sessions.forEach(s=>{unitCounts[s.letter]=(unitCounts[s.letter]||0)+1;});
+  const sortedUnits=Object.entries(unitCounts).sort((a,b)=>b[1]-a[1]);
+  let h=`<div class="section-label">&#220;bersicht</div>
+  <div class="stat-grid">
+    <div class="stat-box"><div class="stat-val">${total}</div><div class="stat-lbl">Gesamt</div></div>
+    <div class="stat-box"><div class="stat-val">${thisWeek}</div><div class="stat-lbl">Diese Woche</div></div>
+  </div>`;
+  if(sortedUnits.length){
+    h+=`<div class="section-label">Einheiten</div><div class="stat-grid">`;
+    sortedUnits.forEach(([letter,count],i)=>{
+      h+=`<div class="stat-box"><span class="badge bc${i%8}" style="display:inline-block;margin-bottom:6px">${esc(letter)}</span><div class="stat-val">${count}</div></div>`;
+    });
+    h+=`</div>`;
+  }
+  if(topEx.length){
+    h+=`<div class="section-label">Top Übungen</div><div class="card" style="cursor:default">`;
+    topEx.forEach(([name,d])=>{
+      h+=`<div class="ex-row"><div style="flex:1"><div class="ex-name">${esc(name)}</div><div class="ex-detail">${d.count}× · max ${d.maxKg} kg</div></div></div>`;
+    });
+    h+=`</div>`;
+  }
+  c.innerHTML=h;
+}
+
+// --- MODALS ---
+function showNewPlanModal(){
+  modal(`<div class="modal-title">Neuer Trainingsplan <button class="icon-btn" onclick="closeModal()">✕</button></div>
+    <div class="modal-field"><label>Name</label><input id="m-plan-name" placeholder="z.B. Ganzkörper Push/Pull" maxlength="60" autofocus></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-primary" onclick="createPlan()">Erstellen</button>
+    </div>`);
+}
+
+async function createPlan(){
+  const name=document.getElementById('m-plan-name').value.trim();
+  if(!name)return;
+  const {error}=await sb.from('plans').insert({name,user_id:currentUser.id});
+  if(error){showToast('Fehler: '+error.message);return;}
+  closeModal();render();showToast('Plan erstellt');
+}
+
+function confirmDeletePlan(id,name){
+  modal(`<div class="modal-title">Plan l\u00f6schen? <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:6px">M\u00f6chtest du den Plan <strong>${esc(name)}</strong> wirklich l\u00f6schen?</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:16px">Alle Einheiten und \u00dcbungen des Plans werden entfernt. Deine Trainingshistorie bleibt erhalten.</div>
+    <div class="modal-actions">
+      <button class="btn-secondary" style="flex:1" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-danger" style="flex:1" onclick="deletePlan('${id}')">Ja, l\u00f6schen</button>
+    </div>`);
+}
+
+async function deletePlan(id){
+  closeModal();
+  await sb.from('plans').delete().eq('id',id);
+  goBack();render();showToast('Plan gel\u00f6scht');
+}
+
+function showAddUnitModal(planId){
+  modal(`<div class="modal-title">Neue Einheit <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div class="modal-row">
+      <div class="modal-field"><label>K&uuml;rzel (1-2 Zeichen)</label><input id="m-unit-letter" placeholder="z.B. PU" maxlength="2" style="text-transform:uppercase;font-family:'DM Mono',monospace;font-size:16px" autofocus></div>
+      <div class="modal-field"><label>Name</label><input id="m-unit-name" placeholder="z.B. Push" maxlength="60"></div>
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin:-4px 0 10px">Beispiele: PU/Push, PL/Pull, BE/Beine, OB/Oben</div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-primary" onclick="createUnit('${planId}')">Hinzuf&uuml;gen</button>
+    </div>`);
+}
+
+async function createUnit(planId){
+  const letter=document.getElementById('m-unit-letter').value.trim().toUpperCase();
+  const name=document.getElementById('m-unit-name').value.trim();
+  if(!letter){showToast('Bitte K\u00fcrzel eingeben');return;}
+  const {data:existing}=await sb.from('units').select('sort_order').eq('plan_id',planId).order('sort_order',{ascending:false}).limit(1);
+  const sort=(existing?.[0]?.sort_order??-1)+1;
+  const {error}=await sb.from('units').insert({plan_id:planId,letter,name:name||null,sort_order:sort});
+  if(error){showToast('Fehler: '+error.message);return;}
+  closeModal();
+  const v=currentView();
+  if(v) await renderPlanDetail(v,document.getElementById('content'));
+  else render();
+  showToast('Einheit hinzugef\u00fcgt');
+}
+
+function confirmDeleteUnit(id,letter,name){
+  modal(`<div class="modal-title">Einheit l\u00f6schen? <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:6px">M\u00f6chtest du Einheit <strong>${esc(letter)}${name?' \u2013 '+esc(name):''}</strong> wirklich l\u00f6schen?</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:16px">Alle \u00dcbungen der Einheit werden entfernt. Deine Trainingshistorie bleibt erhalten.</div>
+    <div class="modal-actions">
+      <button class="btn-secondary" style="flex:1" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-danger" style="flex:1" onclick="deleteUnit('${id}')">Ja, l\u00f6schen</button>
+    </div>`);
+}
+
+async function deleteUnit(id){
+  closeModal();
+  await sb.from('units').delete().eq('id',id);
+  const v=currentView();
+  if(v) await renderPlanDetail(v,document.getElementById('content'));
+  else render();
+  showToast('Einheit gel\u00f6scht');
+}
+
+function showAddExerciseModal(unitId){
+  modal(`<div class="modal-title">&Uuml;bung hinzuf&uuml;gen <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div class="modal-field"><label>Name</label><input id="m-ex-name" placeholder="z.B. Kniebeuge" maxlength="80" autofocus></div>
+    <div class="modal-field"><label>Ger&auml;tetyp</label>
+      <select id="m-ex-equip" onchange="updateExModalKgFields()">
+        <option value="dumbbell">Kurzhantel / Kabelzug (&times;2)</option>
+        <option value="barbell">Langhantel / Maschine (&times;1)</option>
+        <option value="bodyweight">K&ouml;rpergewicht (kein KG)</option>
+      </select>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field"><label>S&auml;tze</label><input id="m-ex-sets" type="number" min="1" max="10" value="3"></div>
+      <div class="modal-field">
+        <label>Zielwert</label>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input id="m-ex-reps" type="number" min="1" value="10" style="flex:1" ${document.getElementById('m-ex-amrap')?.checked?'disabled':''}>
+          <select id="m-ex-reps-unit" style="width:80px;padding:8px 6px">
+            <option value="reps">Wdh.</option>
+            <option value="seconds">Sek.</option>
+            <option value="minutes">Min.</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);white-space:nowrap;cursor:pointer">
+            <input type="checkbox" id="m-ex-amrap" onchange="toggleAmrap('m-ex-reps','m-ex-amrap')" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer">
+            AMRAP
+          </label>
+        </div>
+      </div>
+    </div>
+    <div id="m-ex-kg-section">
+      <div class="modal-row">
+        <div class="modal-field"><label id="m-ex-kg-label">Ziel KG/Seite</label><input id="m-ex-kg" type="number" step="0.5" min="0" placeholder="z.B. 40" oninput="updateExModalKgTotal()"></div>
+        <div class="modal-field" id="m-ex-kgtot-wrap"><label>Ziel KG gesamt</label><input id="m-ex-kgtot" type="number" step="0.5" min="0" placeholder="z.B. 80" readonly style="color:var(--text3)"></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-primary" onclick="createExercise('${unitId}')">Hinzuf&uuml;gen</button>
+    </div>`);
+}
+
+function updateExModalKgFields(){
+  const eq=document.getElementById('m-ex-equip').value;
+  const sec=document.getElementById('m-ex-kg-section');
+  const lbl=document.getElementById('m-ex-kg-label');
+  const totWrap=document.getElementById('m-ex-kgtot-wrap');
+  if(eq==='bodyweight'){sec.style.display='none';return;}
+  sec.style.display='';
+  if(eq==='barbell'){lbl.textContent='Ziel KG gesamt';totWrap.style.display='none';}
+  else{lbl.textContent='Ziel KG/Seite';totWrap.style.display='';}
+  updateExModalKgTotal();
+}
+
+function updateExModalKgTotal(){
+  const eq=document.getElementById('m-ex-equip')?.value;
+  const kg=parseFloat(document.getElementById('m-ex-kg')?.value)||0;
+  const tot=document.getElementById('m-ex-kgtot');
+  if(tot&&eq==='dumbbell') tot.value=kg>0?(kg*2).toFixed(1).replace(/\.0$/,''):'';
+}
+
+async function createExercise(unitId){
+  const name=document.getElementById('m-ex-name').value.trim();
+  const sets=parseInt(document.getElementById('m-ex-sets').value)||3;
+  const isAmrap=document.getElementById('m-ex-amrap')?.checked;
+  const reps=isAmrap?0:(parseInt(document.getElementById('m-ex-reps').value)||10);
+  const repsUnit=isAmrap?'reps':(document.getElementById('m-ex-reps-unit')?.value||'reps');
+  const equip=document.getElementById('m-ex-equip').value;
+  let kgSide=null,kgTot=null;
+  if(equip==='dumbbell'){
+    kgSide=parseFloat(document.getElementById('m-ex-kg').value)||null;
+    kgTot=parseFloat(document.getElementById('m-ex-kgtot').value)||null;
+  } else if(equip==='barbell'){
+    kgTot=parseFloat(document.getElementById('m-ex-kg').value)||null;
+    kgSide=null;
+  }
+  if(!name)return;
+  const {data:existing}=await sb.from('exercises').select('sort_order').eq('unit_id',unitId).order('sort_order',{ascending:false}).limit(1);
+  const sort=(existing?.[0]?.sort_order||0)+1;
+  const {error}=await sb.from('exercises').insert({unit_id:unitId,name,sets,target_reps:reps,target_reps_unit:repsUnit,equipment_type:equip,target_kg_per_side:kgSide,target_kg_total:kgTot,sort_order:sort});
+  if(error){showToast('Fehler: '+error.message);return;}
+  closeModal();
+  const v=currentView();
+  if(v) await renderUnitDetail(v,document.getElementById('content'));
+  showToast('\u00dcbung hinzugef\u00fcgt');
+}
+
+function showAbortWorkoutModal(){
+  modal(`<div class="modal-title">Workout abbrechen? <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:16px">Dein bisheriger Fortschritt wird gespeichert.</div>
+    <div class="modal-actions">
+      <button class="btn-secondary" style="flex:1" onclick="closeModal()">Nein, weiter</button>
+      <button class="btn-danger" style="flex:1" onclick="abortWorkout()">Ja, beenden</button>
+    </div>`);
+}
+
+async function abortWorkout(){
+  const v=currentView();
+  if(!v||v.type!=='session'){closeModal();return;}
+  const duration=stopTimer();
+  const {data:exs} = await sb.from('exercises').select('*').eq('unit_id',v.unitId).order('sort_order');
+  const now=new Date();
+  const {data:sess,error:se} = await sb.from('sessions').insert({
+    user_id:currentUser.id,plan_id:v.planId,unit_id:v.unitId,
+    letter:v.letter,plan_name:v.planName,
+    trained_at:now.toISOString().slice(0,10),week_number:getWeek(now),
+    duration_seconds:duration
+  }).select().single();
+  if(!se && sess){
+    const sets=[];
+    (exs||[]).forEach((ex,ei)=>{
+      for(let s=0;s<ex.sets;s++){
+        if(sessionData['ist_'+ei+'_'+s]||sessionData['done_'+ei+'_'+s]){
+          sets.push({
+            session_id:sess.id,exercise_name:ex.name,set_number:s+1,
+            kg_per_side:parseFloat(sessionData['kg_'+ei])||null,
+            kg_total:parseFloat(sessionData['kgtot_'+ei])||null,
+            target_reps:ex.target_reps,
+        target_reps_unit:ex.target_reps_unit||'reps',
+            actual_reps:parseInt(sessionData['ist_'+ei+'_'+s])||null,
+            done:!!sessionData['done_'+ei+'_'+s]
+          });
+        }
+      }
+    });
+    if(sets.length) await sb.from('session_sets').insert(sets);
+  }
+  sessionData={};
+  currentExIndex=0;
+  sessionStorage.removeItem('tt_session');
+  closeModal();
+  // View-Stack bis zur Startseite leeren
+  viewStack=[];
+  saveNavState();
+  document.getElementById('back-btn').style.display='none';
+  document.getElementById('logout-btn').style.display='';
+  document.getElementById('topbar-title').textContent='Training Tracker';
+  document.getElementById('topbar-sub').textContent='';
+  currentTab='plans';
+  ['plans','log','stats'].forEach(x=>document.getElementById('nav-'+x).classList.toggle('active',x==='plans'));
+  render();
+  showToast('Workout beendet \u2014 Fortschritt gespeichert');
+}
+
+function showUpdateTargetKgModal(exId,ei,equip){
+  equip=equip||'dumbbell';
+  const isBarbell=equip==='barbell';
+  const kgEl=document.getElementById('kg_'+ei);
+  const curKg=kgEl?kgEl.value:'';
+  const kgLbl=isBarbell?'Neues Ziel KG gesamt':'Neues Ziel KG/Seite';
+  const totField=isBarbell?'':`
+    <div class="modal-field"><label>Ziel KG gesamt</label><input id="m-upd-kgtot" type="number" step="0.5" min="0" readonly style="color:var(--text3)" value="${curKg?(parseFloat(curKg)*2).toFixed(1).replace(/\.0$/,''):''}"></div>`;
+  modal(`<div class="modal-title">Ziel-KG aktualisieren <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:14px">Wird f&uuml;r diese und alle zuk&uuml;nftigen Einheiten gespeichert. Historische Einheiten bleiben unver&auml;ndert.</div>
+    <div class="modal-row">
+      <div class="modal-field"><label>${kgLbl}</label><input id="m-upd-kg" type="number" step="0.5" min="0" placeholder="z.B. 45" value="${curKg}" autofocus></div>
+      ${totField}
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-primary" onclick="updateTargetKg('${exId}',${ei},'${equip}')">Speichern</button>
+    </div>`);
+  if(!isBarbell){
+    document.getElementById('m-upd-kg').addEventListener('input',function(){
+      const v=parseFloat(this.value)||0;
+      const tot=document.getElementById('m-upd-kgtot');
+      if(tot) tot.value=v>0?(v*2).toFixed(1).replace(/\.0$/,''):'';
+    });
+  }
+}
+
+function showEditExerciseModal(exId){
+  const ex=window._exCache[exId];
+  if(!ex){showToast('Fehler: \u00dcbung nicht gefunden');return;}
+  const equip=ex.equipment_type||'dumbbell';
+  const isBarbell=equip==='barbell';
+  const isBody=equip==='bodyweight';
+  const curKg=isBarbell?(ex.target_kg_total||''):(ex.target_kg_per_side||'');
+  const curKgTot=ex.target_kg_total||'';
+  const isAmrap=ex.target_reps===0;
+  modal(`<div class="modal-title">&Uuml;bung bearbeiten <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div class="modal-field"><label>Name</label><input id="e-ex-name" value="${esc(ex.name)}" maxlength="80" autofocus></div>
+    <div class="modal-field"><label>Ger&auml;tetyp</label>
+      <select id="e-ex-equip" onchange="updateEditExModalKgFields()">
+        <option value="dumbbell" ${equip==='dumbbell'?'selected':''}>Kurzhantel / Kabelzug (&times;2)</option>
+        <option value="barbell" ${equip==='barbell'?'selected':''}>Langhantel / Maschine (&times;1)</option>
+        <option value="bodyweight" ${equip==='bodyweight'?'selected':''}>K&ouml;rpergewicht (kein KG)</option>
+      </select>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field"><label>S&auml;tze</label><input id="e-ex-sets" type="number" min="1" max="10" value="${ex.sets}"></div>
+      <div class="modal-field">
+        <label>Zielwert</label>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input id="e-ex-reps" type="number" min="1" value="${isAmrap?'':ex.target_reps}" ${isAmrap?'disabled style="color:var(--text3)"':''} style="flex:1">
+          <select id="e-ex-reps-unit" style="width:80px;padding:8px 6px">
+            <option value="reps" ${(ex.target_reps_unit||'reps')==='reps'?'selected':''}>Wdh.</option>
+            <option value="seconds" ${ex.target_reps_unit==='seconds'?'selected':''}>Sek.</option>
+            <option value="minutes" ${ex.target_reps_unit==='minutes'?'selected':''}>Min.</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);white-space:nowrap;cursor:pointer">
+            <input type="checkbox" id="e-ex-amrap" ${isAmrap?'checked':''} onchange="toggleAmrap('e-ex-reps','e-ex-amrap')" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer">
+            AMRAP
+          </label>
+        </div>
+      </div>
+    </div>
+    <div id="e-ex-kg-section" ${isBody?'style="display:none"':''}>
+      <div class="modal-row">
+        <div class="modal-field"><label id="e-ex-kg-label">${isBarbell?'Ziel KG gesamt':'Ziel KG/Seite'}</label><input id="e-ex-kg" type="number" step="0.5" min="0" value="${curKg}" oninput="updateEditExModalKgTotal()"></div>
+        <div class="modal-field" id="e-ex-kgtot-wrap" ${isBarbell?'style="display:none"':''}>
+          <label>Ziel KG gesamt</label><input id="e-ex-kgtot" type="number" step="0.5" min="0" value="${curKgTot}" readonly style="color:var(--text3)">
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-primary" onclick="updateExercise('${exId}')">Speichern</button>
+    </div>`);
+}
+
+function updateEditExModalKgFields(){
+  const eq=document.getElementById('e-ex-equip').value;
+  const sec=document.getElementById('e-ex-kg-section');
+  const lbl=document.getElementById('e-ex-kg-label');
+  const totWrap=document.getElementById('e-ex-kgtot-wrap');
+  if(eq==='bodyweight'){sec.style.display='none';return;}
+  sec.style.display='';
+  if(eq==='barbell'){lbl.textContent='Ziel KG gesamt';totWrap.style.display='none';}
+  else{lbl.textContent='Ziel KG/Seite';totWrap.style.display='';}
+  updateEditExModalKgTotal();
+}
+
+function updateEditExModalKgTotal(){
+  const eq=document.getElementById('e-ex-equip')?.value;
+  const kg=parseFloat(document.getElementById('e-ex-kg')?.value)||0;
+  const tot=document.getElementById('e-ex-kgtot');
+  if(tot&&eq==='dumbbell') tot.value=kg>0?(kg*2).toFixed(1).replace(/\.0$/,''):'';
+}
+
+async function updateExercise(exId){
+  const name=document.getElementById('e-ex-name').value.trim();
+  const sets=parseInt(document.getElementById('e-ex-sets').value)||3;
+  const isAmrap=document.getElementById('e-ex-amrap')?.checked;
+  const reps=isAmrap?0:(parseInt(document.getElementById('e-ex-reps').value)||10);
+  const repsUnit=isAmrap?'reps':(document.getElementById('e-ex-reps-unit')?.value||'reps');
+  const equip=document.getElementById('e-ex-equip').value;
+  let kgSide=null,kgTot=null;
+  if(equip==='dumbbell'){
+    kgSide=parseFloat(document.getElementById('e-ex-kg').value)||null;
+    kgTot=parseFloat(document.getElementById('e-ex-kgtot').value)||null;
+  } else if(equip==='barbell'){
+    kgTot=parseFloat(document.getElementById('e-ex-kg').value)||null;
+  }
+  if(!name)return;
+  const {error}=await sb.from('exercises').update({name,sets,target_reps:reps,target_reps_unit:repsUnit,equipment_type:equip,target_kg_per_side:kgSide,target_kg_total:kgTot}).eq('id',exId);
+  if(error){showToast('Fehler: '+error.message);return;}
+  closeModal();
+  const v=currentView();
+  if(v) await renderUnitDetail(v,document.getElementById('content'));
+  showToast('\u00dcbung gespeichert');
+}
+
+async function updateTargetKg(exId,ei,equip){
+  equip=equip||'dumbbell';
+  const isBarbell=equip==='barbell';
+  const kg=parseFloat(document.getElementById('m-upd-kg').value)||null;
+  const kgSide=isBarbell?null:kg;
+  const kgTot=isBarbell?kg:(parseFloat(document.getElementById('m-upd-kgtot')?.value)||null);
+  const {error}=await sb.from('exercises').update({target_kg_per_side:kgSide,target_kg_total:kgTot}).eq('id',exId);
+  if(error){showToast('Fehler: '+error.message);return;}
+  if(kg!==null){
+    sessionData['kg_'+ei]=String(kg);
+    sessionData['kgtot_'+ei]=String(kgTot||kg);
+  }
+  closeModal();
+  const v=currentView();
+  if(v) renderSession(v,document.getElementById('content'));
+  showToast('Ziel-KG aktualisiert');
+}
+
+function confirmDeleteExercise(id,name){
+  modal(`<div class="modal-title">&Uuml;bung l&ouml;schen? <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:6px">M&ouml;chtest du <strong>${esc(name)}</strong> wirklich l&ouml;schen?</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:16px">Deine Trainingshistorie bleibt erhalten.</div>
+    <div class="modal-actions">
+      <button class="btn-secondary" style="flex:1" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-danger" style="flex:1" onclick="deleteExercise('${id}')">Ja, l&ouml;schen</button>
+    </div>`);
+}
+
+async function deleteExercise(id){
+  closeModal();
+  await sb.from('exercises').delete().eq('id',id);
+  const v=currentView();
+  if(v) await renderUnitDetail(v,document.getElementById('content'));
+  showToast('\u00dcbung entfernt');
+}
+
+function modal(html){
+  document.getElementById('modal-container').innerHTML=
+    `<div class="modal-bg" id="modal-bg"><div class="modal">${html}</div></div>`;
+  const bg=document.getElementById('modal-bg');
+  let downOnBg=false;
+  bg.addEventListener('mousedown',e=>{downOnBg=e.target===bg;});
+  bg.addEventListener('click',e=>{if(e.target===bg&&downOnBg)closeModal();});
+}
+function closeModal(){document.getElementById('modal-container').innerHTML='';}
+
+// --- DRAG & DROP ---
+let _drag={el:null,clone:null,startY:0,startX:0,offsetY:0,items:[],table:'',container:null};
+
+function dragStart(e){
+  const item=e.currentTarget.closest('.sortable-item');
+  if(!item) return;
+  e.preventDefault();
+  const touch=e.touches?.[0]||e;
+  const rect=item.getBoundingClientRect();
+  _drag.el=item;
+  _drag.startY=touch.clientY;
+  _drag.startX=touch.clientX;
+  _drag.offsetY=touch.clientY-rect.top;
+  _drag.container=item.parentElement;
+  _drag.items=[..._drag.container.querySelectorAll('.sortable-item')];
+  _drag.table=item.dataset.type==='unit'?'units':'exercises';
+
+  // Ghost clone
+  _drag.clone=item.cloneNode(true);
+  Object.assign(_drag.clone.style,{
+    position:'fixed',left:rect.left+'px',top:rect.top+'px',
+    width:rect.width+'px',zIndex:'999',opacity:'0.9',
+    pointerEvents:'none',boxShadow:'0 8px 24px rgba(0,0,0,0.4)',
+    borderRadius:'var(--radius)',background:'var(--bg2)',
+    transition:'none'
+  });
+  document.body.appendChild(_drag.clone);
+  item.classList.add('dragging');
+
+  document.addEventListener('mousemove',dragMove,{passive:false});
+  document.addEventListener('touchmove',dragMove,{passive:false});
+  document.addEventListener('mouseup',dragEnd);
+  document.addEventListener('touchend',dragEnd);
+}
+
+function dragMove(e){
+  if(!_drag.el) return;
+  e.preventDefault();
+  const touch=e.touches?.[0]||e;
+  const y=touch.clientY;
+  _drag.clone.style.top=(y-_drag.offsetY)+'px';
+
+  // Highlight target
+  _drag.items.forEach(item=>{
+    item.classList.remove('drag-over-top','drag-over-bottom');
+    if(item===_drag.el) return;
+    const r=item.getBoundingClientRect();
+    const mid=r.top+r.height/2;
+    if(y<mid && y>r.top-10) item.classList.add('drag-over-top');
+    else if(y>=mid && y<r.bottom+10) item.classList.add('drag-over-bottom');
+  });
+}
+
+async function dragEnd(e){
+  if(!_drag.el) return;
+  document.removeEventListener('mousemove',dragMove);
+  document.removeEventListener('touchmove',dragMove);
+  document.removeEventListener('mouseup',dragEnd);
+  document.removeEventListener('touchend',dragEnd);
+
+  // Find drop target
+  const touch=e.changedTouches?.[0]||e;
+  const y=touch.clientY;
+  let targetEl=null, insertBefore=true;
+  _drag.items.forEach(item=>{
+    if(item===_drag.el) return;
+    const r=item.getBoundingClientRect();
+    const mid=r.top+r.height/2;
+    if(y>=r.top-10 && y<mid){targetEl=item;insertBefore=true;}
+    else if(y>=mid && y<r.bottom+10){targetEl=item;insertBefore=false;}
+    item.classList.remove('drag-over-top','drag-over-bottom');
+  });
+
+  _drag.clone.remove();
+  _drag.el.classList.remove('dragging');
+
+  if(targetEl){
+    if(insertBefore) _drag.container.insertBefore(_drag.el,targetEl);
+    else _drag.container.insertBefore(_drag.el,targetEl.nextSibling);
+
+    // Neue Reihenfolge speichern
+    const newOrder=[..._drag.container.querySelectorAll('.sortable-item')].map((el,i)=>({id:el.dataset.id,sort_order:i}));
+    await saveSortOrder(_drag.table, newOrder);
+    showToast('Reihenfolge gespeichert');
+  }
+
+  _drag.el=null;_drag.clone=null;_drag.container=null;
+}
+
+async function saveSortOrder(table, items){
+  await Promise.all(items.map(({id,sort_order})=>
+    sb.from(table).update({sort_order}).eq('id',id)
+  ));
+}
+
+function toggleAmrap(repsId, checkboxId){
+  const cb=document.getElementById(checkboxId);
+  const inp=document.getElementById(repsId);
+  if(!inp) return;
+  inp.disabled=cb.checked;
+  inp.style.color=cb.checked?'var(--text3)':'';
+  if(cb.checked) inp.value='';
+}
+
+function unitLabel(unit){
+  return {reps:'Wdh.',seconds:'Sek.',minutes:'Min.'}[unit||'reps']||'Wdh.';
+}
+
+function repsLabel(targetReps, unit){
+  if(targetReps===0) return 'AMRAP';
+  return targetReps+' '+unitLabel(unit);
+}
+
+// --- UTILS ---
+function getWeek(d){
+  const jan1=new Date(d.getFullYear(),0,1);
+  return Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7);
+}
+function formatDate(ds){
+  const d=new Date(ds+'T12:00:00');
+  return d.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function saveNavState(){
+  try{sessionStorage.setItem('tt_nav',JSON.stringify({tab:currentTab,stack:viewStack}));}catch(e){}
+}
+
+function saveSessionData(){
+  try{
+    sessionStorage.setItem('tt_session',JSON.stringify({
+      ...sessionData,
+      __startTime:sessionStartTime,
+      __exIndex:currentExIndex
+    }));
+  }catch(e){}
+}
+
+function restoreNavState(){
+  try{
+    const s=sessionStorage.getItem('tt_nav');
+    if(!s) return false;
+    const {tab,stack}=JSON.parse(s);
+    currentTab=tab||'plans';
+    viewStack=stack||[];
+    return true;
+  }catch(e){return false;}
+}
+
+function restoreSessionData(){
+  try{
+    const s=sessionStorage.getItem('tt_session');
+    if(!s) return;
+    const parsed=JSON.parse(s);
+    const {__startTime,__exIndex,...rest}=parsed;
+    sessionData=rest;
+    currentExIndex=__exIndex||0;
+    if(__startTime){
+      sessionStartTime=__startTime;
+      if(sessionTimer) clearInterval(sessionTimer);
+      sessionTimer=setInterval(()=>{
+        const el=document.getElementById('session-timer');
+        if(el) el.textContent=formatDuration(Math.floor((Date.now()-sessionStartTime)/1000));
+      },1000);
+    }
+  }catch(e){}
+}
+
+// --- PROFILE ---
+async function renderProfile(c){
+  const {data:profile} = await sb.from('profiles').select('full_name,role').eq('id',currentUser.id).single();
+  const name=profile?.full_name||'–';
+  c.innerHTML=`
+    <div class="section-label">Mein Profil</div>
+    <div class="card" style="cursor:default;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="avatar" style="width:48px;height:48px;font-size:18px">${name!=='–'?name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2):'?'}</div>
+        <div>
+          <div style="font-size:16px;font-weight:600;color:var(--text)">${esc(name)}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">${currentUser.email}</div>
+        </div>
+      </div>
+    </div>
+    <div class="section-label">Einstellungen</div>
+    <div class="card" style="cursor:default">
+      <div class="ex-row" style="cursor:pointer" onclick="showChangeNameModal('${esc(profile?.full_name||'')}')">
+        <div class="ex-name">Name \u00e4ndern</div>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16" style="color:var(--text3)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </div>
+      <div class="ex-row" style="cursor:pointer" onclick="showChangePasswordModal()">
+        <div class="ex-name">Passwort \u00e4ndern</div>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16" style="color:var(--text3)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </div>
+    </div>
+    <hr class="divider">
+    <button class="btn-secondary" style="width:100%;justify-content:center" onclick="doLogout()">Abmelden</button>`;
+}
+
+function showChangePasswordModal(){
+  modal(`<div class="modal-title">Passwort \u00e4ndern <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div class="modal-field"><label>Neues Passwort</label><input type="password" id="new-pw" placeholder="Mind. 8 Zeichen" autofocus></div>
+    <div class="modal-field"><label>Passwort best\u00e4tigen</label><input type="password" id="new-pw2" placeholder="Wiederholen"></div>
+    <div id="pw-err" style="font-size:13px;color:var(--red);min-height:18px"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" style="flex:1" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-primary" style="flex:1" id="pw-btn" onclick="changePassword()">Speichern</button>
+    </div>`);
+}
+
+async function changePassword(){
+  const pw=document.getElementById('new-pw').value;
+  const pw2=document.getElementById('new-pw2').value;
+  const errEl=document.getElementById('pw-err');
+  const btn=document.getElementById('pw-btn');
+  errEl.textContent='';
+  if(pw.length<8){errEl.textContent='Mind. 8 Zeichen.';return;}
+  if(pw!==pw2){errEl.textContent='Passw\u00f6rter stimmen nicht \u00fcberein.';return;}
+  btn.textContent='...';btn.disabled=true;
+  const {error}=await sb.auth.updateUser({password:pw});
+  btn.textContent='Speichern';btn.disabled=false;
+  if(error){errEl.textContent=error.message;return;}
+  closeModal();
+  showToast('Passwort ge\u00e4ndert \u2713');
+}
+
+function showChangeNameModal(currentName){
+  modal(`<div class="modal-title">Name \u00e4ndern <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div class="modal-field"><label>Dein Name</label><input id="new-name" value="${esc(currentName)}" placeholder="Vor- und Nachname" maxlength="60" autofocus></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" style="flex:1" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-primary" style="flex:1" onclick="changeName()">Speichern</button>
+    </div>`);
+}
+
+async function changeName(){
+  const name=document.getElementById('new-name').value.trim();
+  if(!name)return;
+  const {error}=await sb.from('profiles').update({full_name:name}).eq('id',currentUser.id);
+  if(error){showToast('Fehler: '+error.message);return;}
+  closeModal();
+  setTab('profile');
+  showToast('Name ge\u00e4ndert');
+}
+// ============================================================
+let currentUserRole = 'athlete';
+let trainerViewStack = [];
+let trainerTab = 'athletes';
+
+async function loadUserRole(){
+  const {data} = await sb.from('profiles').select('role,full_name').eq('id',currentUser.id).single();
+  currentUserRole = data?.role || 'athlete';
+  return currentUserRole;
+}
+
+function showTrainerApp(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app').style.display='none';
+  document.getElementById('trainer-app').style.display='flex';
+  setTrainerTab('athletes');
+}
+
+function showAthleteApp(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('trainer-app').style.display='none';
+  document.getElementById('app').style.display='flex';
+  setTab('plans');
+}
+
+// --- TRAINER NAV ---
+function setTrainerTab(t){
+  trainerTab=t; trainerViewStack=[];
+  ['athletes','plans'].forEach(x=>{
+    document.getElementById('tnav-'+x).classList.toggle('active',x===t);
+  });
+  document.getElementById('trainer-back-btn').style.display='none';
+  document.getElementById('trainer-topbar-title').textContent='Trainer Dashboard';
+  document.getElementById('trainer-topbar-sub').textContent='';
+  renderTrainer();
+}
+
+function trainerPushView(v){
+  trainerViewStack.push(v);
+  document.getElementById('trainer-back-btn').style.display='';
+  renderTrainer();
+}
+
+function trainerGoBack(){
+  trainerViewStack.pop();
+  if(!trainerViewStack.length){
+    document.getElementById('trainer-back-btn').style.display='none';
+    document.getElementById('trainer-topbar-title').textContent='Trainer Dashboard';
+    document.getElementById('trainer-topbar-sub').textContent='';
+  }
+  renderTrainer();
+}
+
+async function renderTrainer(){
+  const c=document.getElementById('trainer-content');
+  c.innerHTML=`<div class="loading"><div class="spinner"></div> Laden...</div>`;
+  const v=trainerViewStack[trainerViewStack.length-1]||null;
+  try {
+    if(v){
+      if(v.type==='athlete-detail') await renderAthleteDetail(v,c);
+      else if(v.type==='athlete-log') await renderAthleteLog(v,c);
+      else if(v.type==='athlete-session') await renderAthleteSession(v,c);
+      else if(v.type==='assign-plans') await renderAssignPlans(v,c);
+      else if(v.type==='trainer-plan-detail') await renderTrainerPlanDetail(v,c);
+      else if(v.type==='trainer-unit-detail') await renderTrainerUnitDetail(v,c);
+    } else if(trainerTab==='athletes') await renderAthletes(c);
+    else await renderTrainerPlans(c);
+  } catch(e){
+    c.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Fehler</div><div class="empty-sub">${e.message}</div></div>`;
+  }
+}
+
+// --- ATHLETES OVERVIEW ---
+async function renderAthletes(c){
+  const {data:relations} = await sb.from('trainer_athletes').select('*').eq('trainer_id',currentUser.id);
+  if(!relations||!relations.length){
+    let h=`<div class="section-label">Meine Athletes</div>`;
+    h+=`<div class="empty"><div class="empty-icon">👥</div><div class="empty-title">Noch keine Athletes</div><div class="empty-sub">Lade deinen ersten Athlete ein</div></div>`;
+    h+=`<button class="btn-secondary" style="width:100%;justify-content:center;margin-top:8px" onclick="showInviteAthleteModal()">+ Athlete einladen</button>`;
+    c.innerHTML=h;return;
+  }
+  // Namen separat laden
+  const athleteIds=relations.map(r=>r.athlete_id);
+  const {data:profiles} = await sb.from('profiles').select('id,full_name').in('id',athleteIds);
+  const profileMap={};
+  (profiles||[]).forEach(p=>profileMap[p.id]=p);
+
+  let h=`<div class="section-label">Meine Athletes</div>`;
+  relations.forEach(r=>{
+    const profile=profileMap[r.athlete_id];
+    const name=profile?.full_name||'Unbekannt';
+    const initials=name!=='Unbekannt'?name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2):'?';
+    const pending=!r.accepted_at;
+    h+=`<div class="athlete-card" onclick="openAthleteDetail('${r.athlete_id}','${esc(name)}')">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="avatar">${initials}</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:600;color:var(--text)">${esc(name)}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">${pending?'<span style="color:var(--amber)">Einladung ausstehend</span>':'Aktiv'}</div>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" style="color:var(--text3)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </div>
+    </div>`;
+  });
+  h+=`<button class="btn-secondary" style="width:100%;justify-content:center;margin-top:8px" onclick="showInviteAthleteModal()">+ Athlete einladen</button>`;
+  c.innerHTML=h;
+}
+
+function openAthleteDetail(athleteId, name){
+  document.getElementById('trainer-topbar-title').textContent=name;
+  document.getElementById('trainer-topbar-sub').textContent='Athlete Übersicht';
+  trainerPushView({type:'athlete-detail',athleteId,athleteName:name});
+}
+
+async function renderAthleteDetail(v,c){
+  const [{data:sessions},{data:plans}] = await Promise.all([
+    sb.from('sessions').select('*').eq('user_id',v.athleteId).order('trained_at',{ascending:false}).limit(5),
+    sb.from('plans').select('*').or(`user_id.eq.${v.athleteId},assigned_to.eq.${v.athleteId}`)
+  ]);
+
+  const totalSessions=sessions?.length||0;
+  const week=getWeek(new Date());
+  const thisWeek=(sessions||[]).filter(s=>s.week_number===week).length;
+
+  let h=`
+  <div class="stat-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+    <div class="stat-box"><div class="stat-val">${totalSessions}</div><div class="stat-lbl">Sessions (letzte 5)</div></div>
+    <div class="stat-box"><div class="stat-val">${thisWeek}</div><div class="stat-lbl">Diese Woche</div></div>
+  </div>
+  <div class="section-label">Aktionen</div>
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <button class="btn-primary" style="flex:1" onclick="trainerPushView({type:'assign-plans',athleteId:'${v.athleteId}',athleteName:'${esc(v.athleteName)}'})">
+      Plan zuweisen
+    </button>
+    <button class="btn-secondary" style="flex:1" onclick="showCreatePlanForAthleteModal('${v.athleteId}','${esc(v.athleteName)}')">
+      Neuen Plan erstellen
+    </button>
+    <button class="btn-secondary" style="flex:1" onclick="trainerPushView({type:'athlete-log',athleteId:'${v.athleteId}',athleteName:'${esc(v.athleteName)}'})">
+      Verlauf ansehen
+    </button>
+  </div>
+  <div class="section-label">Zugewiesene Pläne</div>`;
+
+  const assignedPlans=(plans||[]).filter(p=>p.assigned_to===v.athleteId);
+  if(!assignedPlans.length){
+    h+=`<div style="font-size:13px;color:var(--text3);padding:8px 0 14px">Noch keine Pläne zugewiesen</div>`;
+  } else {
+    assignedPlans.forEach(p=>{
+      h+=`<div class="card" style="cursor:default;margin-bottom:8px">
+        <div class="card-row">
+          <div><div class="card-title">${esc(p.name)}</div></div>
+          <button class="btn-danger" style="padding:5px 10px;font-size:12px" onclick="unassignPlan('${p.id}','${v.athleteId}')">Entfernen</button>
+        </div>
+      </div>`;
+    });
+  }
+
+  h+=`<div class="section-label">Letzte Sessions</div>`;
+  if(!sessions||!sessions.length){
+    h+=`<div style="font-size:13px;color:var(--text3);padding:8px 0">Noch keine Sessions</div>`;
+  } else {
+    sessions.forEach(s=>{
+      const bc='bc'+(['A','B','C','D','E','F','G','H'].indexOf(s.letter)%8||0);
+      const dur=s.duration_seconds?` · ${formatDuration(s.duration_seconds)}`:'';
+      h+=`<div class="log-item" onclick="trainerPushView({type:'athlete-session',sessionId:'${s.id}',date:'${s.trained_at}',letter:'${esc(s.letter)}',planName:'${esc(s.plan_name)}'})">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="badge ${bc}">${esc(s.letter)}</span>
+          <span style="font-size:14px;font-weight:500">${esc(s.plan_name)}</span>
+        </div>
+        <div class="log-meta">${formatDate(s.trained_at)}${dur}</div>
+      </div>`;
+    });
+  }
+
+  h+=`<hr class="divider"><button class="btn-danger" onclick="confirmRemoveAthlete('${v.athleteId}','${esc(v.athleteName)}')">Athlete entfernen</button>`;
+  c.innerHTML=h;
+}
+
+// --- ATHLETE LOG ---
+async function renderAthleteLog(v,c){
+  document.getElementById('trainer-topbar-title').textContent=v.athleteName;
+  document.getElementById('trainer-topbar-sub').textContent='Trainingsverlauf';
+  const {data:sessions} = await sb.from('sessions').select('*').eq('user_id',v.athleteId).order('trained_at',{ascending:false}).limit(50);
+  if(!sessions||!sessions.length){
+    c.innerHTML=`<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">Keine Sessions</div></div>`;return;
+  }
+  let h='<div class="section-label">Trainingsverlauf</div>';
+  let lastWeek='';
+  sessions.forEach(s=>{
+    const wk='KW '+s.week_number+' · '+s.trained_at.slice(0,4);
+    if(wk!==lastWeek){h+=`<div class="week-head">${wk}</div>`;lastWeek=wk;}
+    const bc='bc'+(['A','B','C','D','E','F','G','H'].indexOf(s.letter)%8||0);
+    const dur=s.duration_seconds?` · ${formatDuration(s.duration_seconds)}`:'';
+    h+=`<div class="log-item" onclick="trainerPushView({type:'athlete-session',sessionId:'${s.id}',date:'${s.trained_at}',letter:'${esc(s.letter)}',planName:'${esc(s.plan_name)}'})">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="badge ${bc}">${esc(s.letter)}</span>
+        <span style="font-size:14px;font-weight:500">${esc(s.plan_name)}</span>
+      </div>
+      <div class="log-meta">${formatDate(s.trained_at)}${dur}</div>
+    </div>`;
+  });
+  c.innerHTML=h;
+}
+
+// --- ATHLETE SESSION DETAIL ---
+async function renderAthleteSession(v,c){
+  document.getElementById('trainer-topbar-title').textContent=v.date+' · '+v.letter;
+  document.getElementById('trainer-topbar-sub').textContent=v.planName;
+  const [{data:sess},{data:sets}] = await Promise.all([
+    sb.from('sessions').select('duration_seconds').eq('id',v.sessionId).single(),
+    sb.from('session_sets').select('*').eq('session_id',v.sessionId).order('set_number')
+  ]);
+  const byEx={};
+  (sets||[]).forEach(s=>{
+    if(!byEx[s.exercise_name]) byEx[s.exercise_name]=[];
+    byEx[s.exercise_name].push(s);
+  });
+  let h='';
+  if(sess?.duration_seconds){
+    h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" style="color:var(--accent);flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span style="font-size:14px;color:var(--text)">Trainingsdauer: <strong>${formatDuration(sess.duration_seconds)}</strong></span>
+    </div>`;
+  }
+  Object.entries(byEx).forEach(([name,exSets])=>{
+    h+=`<div class="session-card" style="cursor:default">
+      <div class="session-ex-title">${esc(name)}</div>
+      <table class="sets-table">
+        <thead><tr><th>Satz</th><th>KG/S</th><th>KG ges.</th><th>Ziel</th><th>Ist</th><th>✓</th></tr></thead>
+        <tbody>`;
+    exSets.forEach(s=>{
+      h+=`<tr>
+        <td><span class="set-num">${s.set_number}</span></td>
+        <td style="font-family:'DM Mono';font-size:13px">${s.kg_per_side??'–'}</td>
+        <td style="font-family:'DM Mono';font-size:13px">${s.kg_total??'–'}</td>
+        <td style="font-family:'DM Mono';font-size:13px;color:var(--text3)">${s.target_reps===0?'AMRAP':(s.target_reps??'–')}</td>
+        <td style="font-family:'DM Mono';font-size:13px;color:var(--accent)">${s.actual_reps??'–'}</td>
+        <td style="font-size:16px">${s.done?'✅':'○'}</td>
+      </tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  });
+  if(!h) h=`<div class="empty"><div class="empty-title">Keine Daten</div></div>`;
+  c.innerHTML=h;
+}
+
+// --- ASSIGN PLANS ---
+async function renderAssignPlans(v,c){
+  document.getElementById('trainer-topbar-title').textContent='Plan zuweisen';
+  document.getElementById('trainer-topbar-sub').textContent=v.athleteName;
+  const {data:plans} = await sb.from('plans').select('*').eq('user_id',currentUser.id).order('created_at');
+  const {data:assigned} = await sb.from('plans').select('id').eq('assigned_to',v.athleteId);
+  const assignedIds=new Set((assigned||[]).map(p=>p.id));
+  let h=`<div class="section-label">Meine Pläne</div>`;
+  if(!plans||!plans.length){
+    h+=`<div class="empty"><div class="empty-title">Keine Pläne vorhanden</div><div class="empty-sub">Erstelle zuerst einen Plan im "Pläne"-Tab</div></div>`;
+  } else {
+    plans.forEach(p=>{
+      const isAssigned=assignedIds.has(p.id);
+      h+=`<div class="card" style="cursor:default">
+        <div class="card-row">
+          <div class="card-title">${esc(p.name)}</div>
+          ${isAssigned
+            ?`<button class="btn-secondary btn-sm" onclick="unassignPlan('${p.id}','${v.athleteId}')">Entfernen</button>`
+            :`<button class="btn-primary btn-sm" onclick="assignPlan('${p.id}','${v.athleteId}','${esc(v.athleteName)}')">Zuweisen</button>`}
+        </div>
+      </div>`;
+    });
+  }
+  c.innerHTML=h;
+}
+
+async function assignPlan(planId, athleteId, athleteName){
+  const {error} = await sb.from('plans').update({assigned_to:athleteId,created_by:currentUser.id}).eq('id',planId);
+  if(error){showToast('Fehler: '+error.message);return;}
+  showToast('Plan zugewiesen an '+athleteName);
+  renderTrainer();
+}
+
+async function unassignPlan(planId, athleteId){
+  const {error} = await sb.from('plans').update({assigned_to:null}).eq('id',planId).eq('assigned_to',athleteId);
+  if(error){showToast('Fehler: '+error.message);return;}
+  showToast('Plan entfernt');
+  renderTrainer();
+}
+
+// --- TRAINER PLANS ---
+async function renderTrainerPlans(c){
+  const {data:plans} = await sb.from('plans').select('*,units(count)').eq('user_id',currentUser.id).order('created_at');
+  let h=`<div class="section-label">Meine Trainingspläne</div>`;
+  if(!plans||!plans.length){
+    h+=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Noch keine Pläne</div><div class="empty-sub">Erstelle deinen ersten Plan</div></div>`;
+  } else {
+    plans.forEach(p=>{
+      const uc=p.units?.[0]?.count||0;
+      h+=`<div class="card" onclick="openTrainerPlan('${p.id}','${esc(p.name)}')">
+        <div class="card-row">
+          <div><div class="card-title">${esc(p.name)}</div><div class="card-sub">${uc} Einheit${uc!==1?'en':''}</div></div>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" style="color:var(--text3)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </div>
+      </div>`;
+    });
+  }
+  h+=`<button class="btn-secondary" style="width:100%;margin-top:6px" onclick="showTrainerNewPlanModal()">+ Neuen Plan erstellen</button>`;
+  c.innerHTML=h;
+}
+
+function openTrainerPlan(id,name){
+  document.getElementById('trainer-topbar-title').textContent=name;
+  document.getElementById('trainer-topbar-sub').textContent='Einheiten verwalten';
+  trainerPushView({type:'trainer-plan-detail',planId:id,planName:name});
+}
+
+async function renderTrainerPlanDetail(v,c){
+  // Reuse athlete renderPlanDetail logic but in trainer context
+  currentUser._trainerPlanView=true;
+  const {data:units} = await sb.from('units').select('*,exercises(count)').eq('plan_id',v.planId).order('sort_order');
+  let h=`<div class="section-label">Einheiten</div>`;
+  if(!units||!units.length){
+    h+=`<div class="empty" style="padding:24px"><div class="empty-title">Noch keine Einheiten</div></div>`;
+  } else {
+    units.forEach((u,i)=>{
+      const ec=u.exercises?.[0]?.count||0;
+      const bc='bc'+(i%8);
+      h+=`<div class="card sortable-item" data-id="${u.id}" data-type="unit">
+        <div class="card-row">
+          <div class="drag-handle" onmousedown="dragStart(event)" ontouchstart="dragStart(event)">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+          </div>
+          <div onclick="openTrainerUnit('${u.id}','${esc(u.letter)}','${esc(u.name||'')}','${v.planId}','${esc(v.planName)}')" style="flex:1;display:flex;align-items:center;gap:10px;cursor:pointer">
+            <span class="badge ${bc}">${esc(u.letter)}</span>
+            <div><div class="card-title">${esc(u.name||'Einheit '+u.letter)}</div><div class="card-sub">${ec} Übung${ec!==1?'en':''}</div></div>
+          </div>
+          <button class="icon-btn" style="color:var(--red)" onclick="confirmDeleteUnit('${u.id}','${esc(u.letter)}','${esc(u.name||'')}')">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="17" height="17"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        </div>
+      </div>`;
+    });
+  }
+  h+=`<button class="btn-secondary" style="margin-bottom:10px" onclick="showTrainerAddUnitModal('${v.planId}')">+ Einheit hinzufügen</button>`;
+  h+=`<hr class="divider"><button class="btn-danger" onclick="confirmDeleteTrainerPlan('${v.planId}','${esc(v.planName)}')">Plan löschen</button>`;
+  c.innerHTML=h;
+}
+
+function openTrainerUnit(unitId,letter,name,planId,planName){
+  document.getElementById('trainer-topbar-title').textContent='Einheit '+letter+(name?' – '+name:'');
+  document.getElementById('trainer-topbar-sub').textContent=planName;
+  trainerPushView({type:'trainer-unit-detail',unitId,letter,unitName:name,planId,planName});
+}
+
+async function renderTrainerUnitDetail(v,c){
+  // Reuse athlete unit detail - same functionality
+  const saved = currentView;
+  const savedViewStack = viewStack;
+  viewStack = [{type:'unit',unitId:v.unitId,letter:v.letter,unitName:v.unitName,planId:v.planId,planName:v.planName}];
+  await renderUnitDetail({type:'unit',unitId:v.unitId,letter:v.letter,unitName:v.unitName,planId:v.planId,planName:v.planName},c);
+  viewStack = savedViewStack;
+}
+
+// --- INVITE ATHLETE ---
+function showInviteAthleteModal(){
+  modal(`<div class="modal-title">Athlete anlegen <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:12px">Der Athlete kann sich danach mit diesen Zugangsdaten einloggen und sein Passwort \u00e4ndern.</div>
+    <div class="modal-field"><label>Name</label><input id="invite-name" placeholder="Max Mustermann" maxlength="60" autofocus></div>
+    <div class="modal-field"><label>E-Mail</label><input id="invite-email" type="email" placeholder="athlete@email.de"></div>
+    <div class="modal-field"><label>Initiales Passwort</label><input id="invite-password" type="password" placeholder="Mind. 8 Zeichen"></div>
+    <div id="invite-err" style="font-size:13px;color:var(--red);min-height:18px"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" style="flex:1" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-primary" style="flex:1" id="invite-btn" onclick="inviteAthlete()">Anlegen</button>
+    </div>`);
+}
+
+async function inviteAthlete(){
+  const email=document.getElementById('invite-email').value.trim();
+  const password=document.getElementById('invite-password').value;
+  const full_name=document.getElementById('invite-name').value.trim();
+  const errEl=document.getElementById('invite-err');
+  const btn=document.getElementById('invite-btn');
+  errEl.textContent='';
+
+  if(!email||!password){errEl.textContent='Bitte alle Felder ausf\u00fcllen.';return;}
+  if(password.length<8){errEl.textContent='Passwort muss mindestens 8 Zeichen haben.';return;}
+
+  btn.textContent='...';btn.disabled=true;
+
+  try {
+    const {data:{session}} = await sb.auth.getSession();
+    const res = await fetch(
+      'https://sgrqyfhofhnqyqcfppdh.supabase.co/functions/v1/bright-action',
+      {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization':'Bearer '+session.access_token
+        },
+        body:JSON.stringify({email,password,full_name})
+      }
+    );
+    const result = await res.json();
+    if(!res.ok) throw new Error(result.error||'Unbekannter Fehler');
+    closeModal();
+    renderTrainer();
+    showToast(full_name||email+' wurde angelegt');
+  } catch(e){
+    errEl.textContent=e.message;
+  } finally {
+    btn.textContent='Anlegen';btn.disabled=false;
+  }
+}
+
+function showCreatePlanForAthleteModal(athleteId, athleteName){
+  modal(`<div class="modal-title">Neuer Plan f&uuml;r ${esc(athleteName)} <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div class="modal-field"><label>Name des Plans</label><input id="aplan-name" placeholder="z.B. Ganzkörper 3x" maxlength="60" autofocus></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" style="flex:1" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-primary" style="flex:1" onclick="createPlanForAthlete('${athleteId}','${esc(athleteName)}')">Erstellen</button>
+    </div>`);
+}
+
+async function createPlanForAthlete(athleteId, athleteName){
+  const name=document.getElementById('aplan-name').value.trim();
+  if(!name)return;
+  const {error}=await sb.from('plans').insert({
+    name,
+    user_id:currentUser.id,
+    created_by:currentUser.id,
+    assigned_to:athleteId
+  });
+  if(error){showToast('Fehler: '+error.message);return;}
+  closeModal();
+  renderTrainer();
+  showToast('Plan erstellt und '+athleteName+' zugewiesen');
+}
+function showTrainerNewPlanModal(){
+  modal(`<div class="modal-title">Neuer Trainingsplan <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div class="modal-field"><label>Name</label><input id="trainer-plan-name" placeholder="z.B. Ganzkörper 3x" maxlength="60" autofocus></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-primary" onclick="createTrainerPlan()">Erstellen</button>
+    </div>`);
+}
+
+async function createTrainerPlan(){
+  const name=document.getElementById('trainer-plan-name').value.trim();
+  if(!name)return;
+  const {error}=await sb.from('plans').insert({name,user_id:currentUser.id,created_by:currentUser.id});
+  if(error){showToast('Fehler: '+error.message);return;}
+  closeModal();renderTrainer();showToast('Plan erstellt');
+}
+
+function showTrainerAddUnitModal(planId){
+  modal(`<div class="modal-title">Neue Einheit <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div class="modal-row">
+      <div class="modal-field"><label>K&uuml;rzel (1-2 Zeichen)</label><input id="tm-unit-letter" placeholder="z.B. PU" maxlength="2" style="text-transform:uppercase;font-family:'DM Mono',monospace;font-size:16px" autofocus></div>
+      <div class="modal-field"><label>Name</label><input id="tm-unit-name" placeholder="z.B. Push" maxlength="60"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-primary" onclick="createTrainerUnit('${planId}')">Hinzuf&uuml;gen</button>
+    </div>`);
+}
+
+async function createTrainerUnit(planId){
+  const letter=document.getElementById('tm-unit-letter').value.trim().toUpperCase();
+  const name=document.getElementById('tm-unit-name').value.trim();
+  if(!letter){showToast('Bitte K\u00fcrzel eingeben');return;}
+  const {data:existing}=await sb.from('units').select('sort_order').eq('plan_id',planId).order('sort_order',{ascending:false}).limit(1);
+  const sort=(existing?.[0]?.sort_order??-1)+1;
+  const {error}=await sb.from('units').insert({plan_id:planId,letter,name:name||null,sort_order:sort});
+  if(error){showToast('Fehler: '+error.message);return;}
+  closeModal();renderTrainer();
+}
+
+async function confirmDeleteTrainerPlan(id,name){
+  modal(`<div class="modal-title">Plan l\u00f6schen? <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:6px">Plan <strong>${esc(name)}</strong> wirklich l\u00f6schen?</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:16px">Alle Einheiten und \u00dcbungen werden entfernt.</div>
+    <div class="modal-actions">
+      <button class="btn-secondary" style="flex:1" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-danger" style="flex:1" onclick="deleteTrainerPlan('${id}')">Ja, l\u00f6schen</button>
+    </div>`);
+}
+
+async function deleteTrainerPlan(id){
+  closeModal();
+  await sb.from('plans').delete().eq('id',id);
+  trainerGoBack();renderTrainer();showToast('Plan gel\u00f6scht');
+}
+
+// --- REMOVE ATHLETE ---
+function confirmRemoveAthlete(athleteId,name){
+  modal(`<div class="modal-title">Athlete entfernen? <button class="icon-btn" onclick="closeModal()">&#x2715;</button></div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:16px"><strong>${esc(name)}</strong> aus deiner Athlete-Liste entfernen?</div>
+    <div class="modal-actions">
+      <button class="btn-secondary" style="flex:1" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-danger" style="flex:1" onclick="removeAthlete('${athleteId}')">Entfernen</button>
+    </div>`);
+}
+
+async function removeAthlete(athleteId){
+  closeModal();
+  await sb.from('trainer_athletes').delete().eq('trainer_id',currentUser.id).eq('athlete_id',athleteId);
+  trainerGoBack();renderTrainer();showToast('Athlete entfernt');
+}
+
+// ============================================================
+// ATHLETE: show trainer badge on assigned plans
+// ============================================================
+async function isTrainerPlan(planId){
+  const {data} = await sb.from('plans').select('created_by').eq('id',planId).single();
+  return data?.created_by && data.created_by !== currentUser.id;
+}
+
+sb.auth.getSession().then(async ({data:{session}})=>{
+  if(session){
+    currentUser=session.user;
+    const role=await loadUserRole();
+    if(role==='trainer'){
+      showTrainerApp();
+    } else {
+      document.getElementById('auth-screen').style.display='none';
+      document.getElementById('app').style.display='flex';
+      const restored=restoreNavState();
+      restoreSessionData();
+      if(restored && viewStack.length){
+        document.getElementById('back-btn').style.display='';
+        document.getElementById('logout-btn').style.display='none';
+        const v=viewStack[viewStack.length-1];
+        if(v.type==='plan'){
+          document.getElementById('topbar-title').textContent=v.planName||'Plan';
+          document.getElementById('topbar-sub').textContent='Einheiten';
+        } else if(v.type==='unit'){
+          document.getElementById('topbar-title').textContent='Einheit '+v.letter+(v.unitName?' \u2013 '+v.unitName:'');
+          document.getElementById('topbar-sub').textContent=v.planName||'';
+        } else if(v.type==='session'){
+          document.getElementById('topbar-title').textContent='Training \u00b7 '+v.letter;
+          document.getElementById('topbar-sub').textContent=v.planName||'';
+        }
+      }
+      ['plans','log','stats'].forEach(x=>{
+        document.getElementById('nav-'+x).classList.toggle('active',x===currentTab);
+      });
+      render();
+    }
+  }
+});
+
+// Service Worker registrieren
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>

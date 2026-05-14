@@ -1,0 +1,105 @@
+.container {
+  padding: 14px 14px 24px;
+}
+
+.progressRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.timer {
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 13px;
+  color: var(--accent);
+  background: rgba(34,211,238,0.1);
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.exHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.kgBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid rgba(34,211,238,0.3);
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.kgBtn:hover {
+  background: var(--accent-dim);
+}
+
+.bodyBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(34,211,238,0.08);
+  border: 1px solid rgba(34,211,238,0.2);
+  border-radius: 8px;
+  padding: 7px 12px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.kgRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.kgField {
+  flex: 1;
+}
+
+.kgLabel {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.kgTarget {
+  color: var(--accent);
+  font-size: 10px;
+}
+
+.copyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid rgba(34,211,238,0.3);
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.copyBtn:hover {
+  background: var(--accent-dim);
+}
+
+.navRow {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}

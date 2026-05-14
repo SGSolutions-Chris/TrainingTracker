@@ -1,0 +1,35 @@
+.container {
+  padding: 16px 16px 24px;
+}
+
+.unitCard {
+  cursor: default;
+  margin-bottom: 10px;
+}
+
+.unitInfo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.playBtn {
+  background: var(--accent);
+  color: #0f172a;
+  border: none;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.playBtn:hover {
+  background: var(--accent-hover);
+}
