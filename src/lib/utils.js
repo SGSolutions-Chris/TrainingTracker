@@ -41,6 +41,23 @@ export function calcKgTotal(kgSide, equipment) {
   return ''
 }
 
+// Weight unit helpers
+export function kgToLbs(kg) { return Math.round(kg * 2.20462 * 10) / 10 }
+export function lbsToKg(lbs) { return Math.round(lbs / 2.20462 * 10) / 10 }
+export function displayWeight(kg, unit) {
+  if (!kg && kg !== 0) return '–'
+  return unit === 'lbs' ? `${kgToLbs(kg)} lbs` : `${kg} kg`
+}
+export function displayWeightNum(kg, unit) {
+  if (!kg && kg !== 0) return '–'
+  return unit === 'lbs' ? kgToLbs(kg) : kg
+}
+export function inputToKg(value, unit) {
+  const n = parseFloat(value)
+  if (isNaN(n)) return null
+  return unit === 'lbs' ? lbsToKg(n) : n
+}
+
 export const EQUIP_LABELS = {
   dumbbell: 'Kurzhantel / Kabelzug',
   barbell: 'Langhantel / Maschine',

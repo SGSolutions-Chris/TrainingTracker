@@ -4,10 +4,11 @@ import { usePageTitle } from '../contexts/PageTitleContext'
 import s from '../styles/Layout.module.css'
 
 const ATHLETE_TABS = [
-  { to: '/plans',   label: 'Pläne',     icon: IconPlans },
-  { to: '/log',     label: 'Verlauf',   icon: IconLog },
-  { to: '/stats',   label: 'Statistik', icon: IconStats },
-  { to: '/profile', label: 'Profil',    icon: IconProfile },
+  { to: '/plans',   label: 'Pläne',    icon: IconPlans },
+  { to: '/log',     label: 'Verlauf',  icon: IconLog },
+  { to: '/weight',  label: 'Gewicht',  icon: IconWeight },
+  { to: '/stats',   label: 'Statistik',icon: IconStats },
+  { to: '/profile', label: 'Profil',   icon: IconProfile },
 ]
 
 const TRAINER_TABS = [
@@ -16,11 +17,12 @@ const TRAINER_TABS = [
   { to: '/trainer/profile',  label: 'Profil',   icon: IconProfile },
 ]
 
-const ATHLETE_ROOT = ['/plans', '/log', '/stats', '/profile']
+const ATHLETE_ROOT = ['/plans', '/log', '/weight', '/stats', '/profile']
 const TRAINER_ROOT = ['/trainer/athletes', '/trainer/plans', '/trainer/profile']
 
 const STATIC_TITLES = {
   '/plans':            'Trainingspläne',
+  '/weight':           'Gewicht',
   '/log':              'Verlauf',
   '/stats':            'Statistik',
   '/profile':          'Profil',
@@ -128,6 +130,15 @@ function IconProfile() {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
       <circle cx="12" cy="7" r="4"/>
+    </svg>
+  )
+}
+
+function IconWeight() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="5" r="3"/>
+      <path d="M6.5 8a2 2 0 00-1.905 1.38L2.5 17A2 2 0 004.405 19.5h15.19A2 2 0 0021.5 17l-2.095-7.62A2 2 0 0017.5 8z"/>
     </svg>
   )
 }

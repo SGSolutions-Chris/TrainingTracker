@@ -12,6 +12,7 @@ import PlanDetail      from './pages/athlete/PlanDetail'
 import UnitDetail      from './pages/athlete/UnitDetail'
 import Workout         from './pages/athlete/Workout'
 import AthleteLog      from './pages/athlete/Log'
+import AthleteWeight   from './pages/athlete/Weight'
 import LogDetail       from './pages/athlete/LogDetail'
 import AthleteStats    from './pages/athlete/Stats'
 import AthleteProfile  from './pages/athlete/Profile'
@@ -63,6 +64,7 @@ function ProtectedRoutes() {
         <Route path="/plans/:planId"                  element={<PlanDetail />} />
         <Route path="/plans/:planId/units/:unitId"    element={<UnitDetail />} />
         <Route path="/log"                            element={<AthleteLog />} />
+        <Route path="/weight"                         element={<AthleteWeight />} />
         <Route path="/log/:sessionId"                 element={<LogDetail />} />
         <Route path="/stats"                          element={<AthleteStats />} />
         <Route path="/profile"                        element={<AthleteProfile />} />

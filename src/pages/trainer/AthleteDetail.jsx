@@ -5,7 +5,7 @@ import { usePageTitle } from '../../contexts/PageTitleContext'
 import { useToast } from '../../contexts/ToastContext'
 import {
   getAthleteSessions, getAthletePlansForTrainer, getTrainerOwnPlans, getAssignedPlans,
-  assignPlan, unassignPlan, removeAthlete, createPlanForAthlete, getProfile,
+  assignPlan, unassignPlan, removeAthlete, createPlanForAthlete, getProfile, getAthleteWeightLogs,
 } from '../../lib/db'
 import { formatDate, formatDuration, getWeek, unitBadgeClass } from '../../lib/utils'
 import Modal from '../../components/Modal'
@@ -23,6 +23,7 @@ export default function AthleteDetail() {
   const [sessions, setSessions] = useState([])
   const [assignedPlans, setAssignedPlans] = useState([])
   const [athleteProfile, setAthleteProfile] = useState(null)
+  const [weightLogs, setWeightLogs] = useState([])
   const [loading, setLoading] = useState(true)
 
   // Modals
@@ -41,14 +42,16 @@ export default function AthleteDetail() {
 
   async function load() {
     setLoading(true)
-    const [{ data: sess }, { data: plans }, { data: ap }] = await Promise.all([
+    const [{ data: sess }, { data: plans }, { data: ap }, { data: wl }] = await Promise.all([
       getAthleteSessions(athleteId, 5),
       getAthletePlansForTrainer(user.id, athleteId),
       getProfile(athleteId),
+      getAthleteWeightLogs(athleteId, 5),
     ])
     setSessions(sess || [])
     setAssignedPlans((plans || []).filter(p => p.assigned_to === athleteId))
     setAthleteProfile(ap)
+    setWeightLogs(wl || [])
     setLoading(false)
   }
 
@@ -139,6 +142,20 @@ export default function AthleteDetail() {
           </div>
         </div>
       ))}
+
+      <p className="section-label">Gewichtsverlauf</p>
+      {weightLogs.length === 0 ? (
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', paddingBottom: 14 }}>Noch keine Einträge</p>
+      ) : (
+        <div className="card" style={{ cursor: 'default', marginBottom: 8 }}>
+          {weightLogs.map((l, i) => (
+            <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: i < weightLogs.length - 1 ? '1px solid var(--border)' : 'none' }}>
+              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{l.logged_at}</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--heading)', fontFamily: 'var(--font-mono)' }}>{l.weight_kg} kg</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <p className="section-label">Letzte Sessions</p>
       {sessions.length === 0 && (

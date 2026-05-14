@@ -185,6 +185,27 @@ export const removeAthlete = (trainerId, athleteId) =>
   supabase.from('trainer_athletes')
     .delete().eq('trainer_id', trainerId).eq('athlete_id', athleteId)
 
+// ── Weight logs ─────────────────────────────────────────────────
+export const getWeightLogs = (userId, limit = null) => {
+  let q = supabase.from('weight_logs')
+    .select('*').eq('user_id', userId).order('logged_at', { ascending: false })
+  if (limit) q = q.limit(limit)
+  return q
+}
+
+export const upsertWeightLog = (userId, logged_at, weight_kg) =>
+  supabase.from('weight_logs')
+    .upsert({ user_id: userId, logged_at, weight_kg }, { onConflict: 'user_id,logged_at' })
+    .select().single()
+
+export const deleteWeightLog = (id) =>
+  supabase.from('weight_logs').delete().eq('id', id)
+
+export const getAthleteWeightLogs = (athleteId, limit = 10) =>
+  supabase.from('weight_logs')
+    .select('*').eq('user_id', athleteId)
+    .order('logged_at', { ascending: false }).limit(limit)
+
 export const inviteAthlete = async (email, password, fullName, accessToken) => {
   const res = await fetch(
     'https://sgrqyfhofhnqyqcfppdh.supabase.co/functions/v1/bright-action',
