@@ -399,17 +399,17 @@ export default function Workout() {
         </p>
         <div className="modal-row">
           <div className="modal-field">
-            <label>{isBarrel ? 'Ziel KG gesamt' : 'Ziel KG/Seite'}</label>
+            <label>{isBarbell ? 'Ziel KG gesamt' : 'Ziel KG/Seite'}</label>
             <input
               type="number" step={0.5} value={newKg}
               onChange={e => {
                 setNewKg(e.target.value)
-                if (!isBarrel) setNewKgTotal(calcKgTotal(e.target.value, 'dumbbell'))
+                if (!isBarbell) setNewKgTotal(calcKgTotal(e.target.value, 'dumbbell'))
               }}
               autoFocus
             />
           </div>
-          {!isBarrel && (
+          {!isBarbell && (
             <div className="modal-field">
               <label>Ziel KG gesamt</label>
               <input type="number" step={0.5} value={newKgTotal} readOnly style={{ color: 'var(--text-muted)' }} />
