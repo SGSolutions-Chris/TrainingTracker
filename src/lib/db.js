@@ -27,6 +27,9 @@ export const createPlanForAthlete = (name, trainerId, athleteId) =>
     .insert({ name, user_id: trainerId, created_by: trainerId, assigned_to: athleteId })
     .select().single()
 
+export const updatePlan = (planId, data) =>
+  supabase.from('plans').update(data).eq('id', planId)
+
 export const deletePlan = (planId) =>
   supabase.from('plans').delete().eq('id', planId)
 
@@ -55,6 +58,9 @@ export const createUnit = async (planId, letter, name) => {
   const sort = (existing?.[0]?.sort_order ?? -1) + 1
   return supabase.from('units').insert({ plan_id: planId, letter, name: name || null, sort_order: sort })
 }
+
+export const updateUnit = (unitId, data) =>
+  supabase.from('units').update(data).eq('id', unitId)
 
 export const deleteUnit = (unitId) =>
   supabase.from('units').delete().eq('id', unitId)

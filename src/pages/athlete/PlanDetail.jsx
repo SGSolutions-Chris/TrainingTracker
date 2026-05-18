@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { usePageTitle } from '../../contexts/PageTitleContext'
 import { useToast } from '../../contexts/ToastContext'
 import { useDragSort } from '../../hooks/useDragSort'
-import { getUnits, createUnit, deleteUnit, getPlan, deletePlan } from '../../lib/db'
+import { getUnits, createUnit, deleteUnit, updateUnit, getPlan, updatePlan, deletePlan } from '../../lib/db'
 import { unitBadgeClass } from '../../lib/utils'
 import Modal from '../../components/Modal'
 import s from '../../styles/PlanDetail.module.css'
@@ -24,6 +24,15 @@ export default function PlanDetail() {
   const [showAddUnit, setShowAddUnit] = useState(false)
   const [showDeletePlan, setShowDeletePlan] = useState(false)
   const [deleteUnitTarget, setDeleteUnitTarget] = useState(null)
+
+  // Rename plan
+  const [showRenamePlan, setShowRenamePlan] = useState(false)
+  const [renamePlanValue, setRenamePlanValue] = useState('')
+
+  // Rename unit
+  const [renameUnitTarget, setRenameUnitTarget] = useState(null)
+  const [renameUnitLetter, setRenameUnitLetter] = useState('')
+  const [renameUnitName, setRenameUnitName] = useState('')
 
   // Add unit form
   const [letter, setLetter] = useState('')
@@ -47,6 +56,33 @@ export default function PlanDetail() {
     const { data } = await getUnits(planId)
     setRawUnits(data || [])
     setLoading(false)
+  }
+
+  async function handleRenamePlan() {
+    if (!renamePlanValue.trim()) return
+    setSaving(true)
+    const { error } = await updatePlan(planId, { name: renamePlanValue.trim() })
+    setSaving(false)
+    if (error) { showToast('Fehler: ' + error.message); return }
+    const updated = { ...plan, name: renamePlanValue.trim() }
+    setPlan(updated)
+    setPageTitle(updated.name, 'Einheiten')
+    setShowRenamePlan(false)
+    showToast('Plan umbenannt')
+  }
+
+  async function handleRenameUnit() {
+    if (!renameUnitLetter.trim()) return
+    setSaving(true)
+    const { error } = await updateUnit(renameUnitTarget.id, {
+      letter: renameUnitLetter.trim().toUpperCase(),
+      name: renameUnitName.trim() || null,
+    })
+    setSaving(false)
+    if (error) { showToast('Fehler: ' + error.message); return }
+    setRenameUnitTarget(null)
+    showToast('Einheit umbenannt')
+    load()
   }
 
   async function handleAddUnit() {
@@ -91,7 +127,18 @@ export default function PlanDetail() {
 
   return (
     <div className={s.container}>
-      <p className="section-label">Einheiten</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <p className="section-label" style={{ margin: 0, flex: 1 }}>Einheiten</p>
+        {plan && (
+          <button
+            className="icon-btn"
+            title="Plan umbenennen"
+            onClick={() => { setRenamePlanValue(plan.name); setShowRenamePlan(true) }}
+          >
+            <IconEdit />
+          </button>
+        )}
+      </div>
 
       {loading && <div className="spinner-wrap" style={{ minHeight: 120 }}><div className="spinner" /></div>}
 
@@ -136,6 +183,18 @@ export default function PlanDetail() {
 
             <button
               className="icon-btn"
+              title="Einheit umbenennen"
+              onClick={() => {
+                setRenameUnitTarget(unit)
+                setRenameUnitLetter(unit.letter)
+                setRenameUnitName(unit.name || '')
+              }}
+            >
+              <IconEdit />
+            </button>
+
+            <button
+              className="icon-btn"
               style={{ color: 'var(--danger)' }}
               onClick={() => setDeleteUnitTarget(unit)}
             >
@@ -156,6 +215,52 @@ export default function PlanDetail() {
           </button>
         </>
       )}
+
+      {/* Rename Plan Modal */}
+      <Modal isOpen={showRenamePlan} onClose={() => setShowRenamePlan(false)} title="Plan umbenennen">
+        <div className="modal-field">
+          <label>Name</label>
+          <input
+            value={renamePlanValue}
+            onChange={e => setRenamePlanValue(e.target.value)}
+            maxLength={60}
+            autoFocus
+          />
+        </div>
+        <div className="modal-actions">
+          <button className="btn btn-ghost" onClick={() => setShowRenamePlan(false)}>Abbrechen</button>
+          <button className="btn btn-primary" disabled={saving} onClick={handleRenamePlan}>Speichern</button>
+        </div>
+      </Modal>
+
+      {/* Rename Unit Modal */}
+      <Modal isOpen={!!renameUnitTarget} onClose={() => setRenameUnitTarget(null)} title="Einheit umbenennen">
+        <div className="modal-row">
+          <div className="modal-field">
+            <label>Kürzel (1–2 Zeichen)</label>
+            <input
+              value={renameUnitLetter}
+              onChange={e => setRenameUnitLetter(e.target.value.toUpperCase())}
+              maxLength={2}
+              style={{ fontFamily: 'DM Mono, monospace', fontSize: 16 }}
+              autoFocus
+            />
+          </div>
+          <div className="modal-field">
+            <label>Name</label>
+            <input
+              value={renameUnitName}
+              onChange={e => setRenameUnitName(e.target.value)}
+              placeholder="z.B. Push"
+              maxLength={60}
+            />
+          </div>
+        </div>
+        <div className="modal-actions">
+          <button className="btn btn-ghost" onClick={() => setRenameUnitTarget(null)}>Abbrechen</button>
+          <button className="btn btn-primary" disabled={saving} onClick={handleRenameUnit}>Speichern</button>
+        </div>
+      </Modal>
 
       {/* Add Unit Modal */}
       <Modal isOpen={showAddUnit} onClose={() => setShowAddUnit(false)} title="Neue Einheit">
@@ -216,6 +321,9 @@ export default function PlanDetail() {
   )
 }
 
+function IconEdit() {
+  return <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+}
 function IconPlay() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
 }

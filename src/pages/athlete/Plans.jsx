@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
-import { getUnits } from '../../lib/db'
+import { useToast } from '../../contexts/ToastContext'
+import { getUnits, createPlan } from '../../lib/db'
 import { unitBadgeClass } from '../../lib/utils'
 import Modal from '../../components/Modal'
 import s from '../../styles/Plans.module.css'
@@ -10,8 +11,14 @@ import s from '../../styles/Plans.module.css'
 export default function Plans() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const showToast = useToast()
   const [plans, setPlans] = useState([])
   const [loading, setLoading] = useState(true)
+
+  // New plan modal state
+  const [showNew, setShowNew] = useState(false)
+  const [planName, setPlanName] = useState('')
+  const [saving, setSaving] = useState(false)
 
   // Workout-start modal state
   const [showStart, setShowStart] = useState(false)
@@ -55,6 +62,18 @@ export default function Plans() {
     navigate(`/workout/${selectedPlan.id}/${unit.id}`, {
       state: { planName: selectedPlan.name, letter: unit.letter },
     })
+  }
+
+  async function handleCreate() {
+    if (!planName.trim()) return
+    setSaving(true)
+    const { data, error } = await createPlan(planName.trim(), user.id)
+    setSaving(false)
+    if (error) { showToast('Fehler: ' + error.message); return }
+    setShowNew(false)
+    setPlanName('')
+    showToast('Plan erstellt')
+    navigate(`/plans/${data.id}`)
   }
 
   function closeModal() {
@@ -104,10 +123,28 @@ export default function Plans() {
       )}
 
       {!loading && (
-        <button className={s.addBtn} onClick={() => navigate('/plans/new')}>
+        <button className={s.addBtn} onClick={() => { setPlanName(''); setShowNew(true) }}>
           + Neuen Trainingsplan anlegen
         </button>
       )}
+
+      {/* New Plan Modal */}
+      <Modal isOpen={showNew} onClose={() => setShowNew(false)} title="Neuer Trainingsplan">
+        <div className="modal-field">
+          <label>Name</label>
+          <input
+            value={planName}
+            onChange={e => setPlanName(e.target.value)}
+            placeholder="z.B. Ganzkörper 3x"
+            maxLength={60}
+            autoFocus
+          />
+        </div>
+        <div className="modal-actions">
+          <button className="btn btn-ghost" onClick={() => setShowNew(false)}>Abbrechen</button>
+          <button className="btn btn-primary" disabled={saving} onClick={handleCreate}>Erstellen</button>
+        </div>
+      </Modal>
 
       {/* FAB — Workout starten */}
       <button
