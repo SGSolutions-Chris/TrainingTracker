@@ -127,9 +127,9 @@ export default function PlanDetail() {
 
   return (
     <div className={s.container}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <p className="section-label" style={{ margin: 0, flex: 1 }}>Einheiten</p>
-        {plan && (
+      {plan && (
+        <div className={s.planHeading}>
+          <h2 className={s.planTitle}>{plan.name}</h2>
           <button
             className="icon-btn"
             title="Plan umbenennen"
@@ -137,8 +137,10 @@ export default function PlanDetail() {
           >
             <IconEdit />
           </button>
-        )}
-      </div>
+        </div>
+      )}
+
+      <p className="section-label">Einheiten</p>
 
       {loading && <div className="spinner-wrap" style={{ minHeight: 120 }}><div className="spinner" /></div>}
 
